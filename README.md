@@ -1,18 +1,25 @@
-# WinterCMS & OctoberCMS Marketplace (Open Source)
+# A WinterCMS Marketplace 
 
-Welcome to the open source Marketplace project! This application aims to provide a modern, community-driven marketplace for the WinterCMS and OctoberCMS ecosystems, with a primary focus on WinterCMS compatibility.
+Welcome to the source of [frostbreak.market](https://frostbreak.market)! This application aims to provide a modern, community-driven marketplace for the WinterCMS ecosystem, with a primary focus on WinterCMS compatibility.
 
 ## Project Goals
-- **Open Source First:** Built for and by the community. We welcome contributions, feedback, and ideas from everyone.
-- **Marketplace for CMS Ecosystems:** Serve as a central hub for discovering, searching, installing, and updating plugins and themes for WinterCMS (and, in the future, OctoberCMS).
-- **Project Linking:** Easily link your projects to the marketplace for streamlined management.
+- **Marketplace for CMS Ecosystems:** Serve as a self-hostable central hub for discovering, searching, installing, and updating plugins and themes for WinterCMS.
+- **Project Linking and Creating:** Easily link your projects to the marketplace for streamlined management.
 - **Plugin & Theme Management:** Search, install, and update plugins and themes directly from the marketplace interface.
 - **Core Updates:** Experimental support for updating the core WinterCMS version (currently under investigation; use with caution).
 
 ## Current Status
-- Project linking, plugin/theme search, installation, and updates are supported for WinterCMS.
-- Core updates are technically possible, but require further investigation before being recommended for production use.
-- OctoberCMS support is planned for the future.
+- [x] Project creation
+- [x] Project linking themes and plugins
+- [x] Project linking to local WinterCMS installations
+- [x] Plugin/theme search
+- [x] Plugin/theme installation
+- [x] Plugin/theme updates
+- [ ] Core updates are technically possible, but not fully tested.
+- [ ] Authentication to private repositories for package indexing
+- [ ] Marketplace API for third-party integrations
+- [ ] A way to claim ownership of a project or published package
+- [ ] A way to for creators to sell plugins and themes 
 
 ## Contributing
 
