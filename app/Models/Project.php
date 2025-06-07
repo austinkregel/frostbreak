@@ -15,10 +15,26 @@ class Project extends Model
     protected $fillable = [
         'name',
         'license_id',
+        'owner',
+        'owner_id',
+        'owner_type',
     ];
 
     public function packages()
     {
         return $this->morphedByMany(Package::class, 'resourceable', 'marketplace_resourceables');
+    }
+    public function plugins()
+    {
+        return $this->packages();
+    }
+    public function themes()
+    {
+        return $this->packages()->whereJsonContains('keywords', 'theme');
+    }
+
+    public function user()
+    {
+        return $this->morphTo('owner');
     }
 }

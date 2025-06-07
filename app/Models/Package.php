@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\Resource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Scout\Searchable;
 
 class Package extends Model
 {

@@ -34,6 +34,21 @@ Route::withoutMiddleware([
     // Core and Project Endpoints
     Route::post('/core/update', [CoreUpdateController::class, 'handle'])->name('kregel.root.core.update');
     Route::post('/project/detail', [\App\Http\Controllers\Projects::class, 'detail'])->name('kregel.root.project.detail');
+
+    Route::get('/changelog/{branch?}', [\App\Http\Controllers\CoreChangelogController::class, 'changelog'])
+        ->name('kregel.root.changelog');
 });
 
 //Route::get('/')
+
+Route::middleware([
+    'auth:sanctum',
+    config('jetstream.auth_session'),
+    'verified',
+])->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Projects::class, 'index'])->name('dashboard');
+    Route::post('/projects', [\App\Http\Controllers\Projects::class, 'store'])->name('projects.store');
+    Route::get('/project/{project}', [\App\Http\Controllers\Projects::class, 'show'])->name('project.show');
+    Route::post('/project/{project}/add-plugin', [\App\Http\Controllers\Projects::class, 'addPlugin'])->name('project.add-plugin');
+    Route::post('/project/{project}/add-theme', [\App\Http\Controllers\Projects::class, 'addTheme'])->name('project.add-theme');
+});

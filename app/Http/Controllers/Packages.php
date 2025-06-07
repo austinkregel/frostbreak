@@ -12,7 +12,7 @@ class Packages extends Controller
     {
         $packageNames = $request->get('names', []);
         $packages = Package::query()
-            ->whereJsonDoesntContain('keywords', 'theme')
+            ->whereJsonContains('keywords', 'plugin')
             ->whereJsonDoesntContain('keywords', 'october')
             ->whereIn('code', $packageNames)
             ->where('needs_additional_processing', false)
@@ -24,7 +24,7 @@ class Packages extends Controller
     {
         $packageName = $request->get('name');
         $package = Package::query()
-            ->whereJsonDoesntContain('keywords', 'theme')
+            ->whereJsonContains('keywords', 'plugin')
             ->whereJsonDoesntContain('keywords', 'october')
             ->where('code', $packageName)
             ->firstOrFail();
@@ -34,22 +34,12 @@ class Packages extends Controller
     public function search(Request $request)
     {
         $packageName = $request->get('query');
-        // If using Laravel Scout, otherwise fallback to a simple where
-        if (method_exists(Package::class, 'search')) {
-            $packages = Package::search($packageName)
-                ->whereJsonDoesntContain('keywords', 'theme')
-                ->whereJsonDoesntContain('keywords', 'october')
-                ->where('needs_additional_processing', false)
-                ->limit(10)
-                ->get();
-        } else {
-            $packages = Package::where('name', 'like', "%{$packageName}%")
-                ->whereJsonDoesntContain('keywords', 'theme')
-                ->whereJsonDoesntContain('keywords', 'october')
-                ->where('needs_additional_processing', false)
-                ->limit(10)
-                ->get();
-        }
+        $packages = Package::where('name', 'like', "%{$packageName}%")
+            ->whereJsonContains('keywords', 'plugin')
+            ->whereJsonDoesntContain('keywords', 'october')
+            ->limit(10)
+            ->get();
+
         return response()->json($packages);
     }
 
@@ -58,7 +48,7 @@ class Packages extends Controller
         $packages = Package::orderByDesc('downloads')
             ->where('needs_additional_processing', false)
             ->whereJsonDoesntContain('keywords', 'october')
-            ->whereJsonDoesntContain('keywords', 'theme')
+            ->whereJsonContains('keywords', 'plugin')
             ->orderByDesc('favers')
             ->limit(10)
             ->get();
@@ -69,7 +59,7 @@ class Packages extends Controller
     {
         $packageName = $request->get('name');
         $package = Package::query()
-            ->whereJsonDoesntContain('keywords', 'theme')
+            ->whereJsonContains('keywords', 'plugin')
             ->whereJsonDoesntContain('keywords', 'october')
             ->where('needs_additional_processing', false)
             ->where('code', $packageName)
@@ -81,20 +71,15 @@ class Packages extends Controller
         if (!$response->successful()) {
             return response()->json(['error' => 'Failed to fetch video headers'], 500);
         }
-
         // Get content type and content length
         $contentType = $response->header('Content-Type', 'application/octet-stream');
-        $contentLength = $response->header('Content-Length');
         $contentDisposition = $response->header('content-disposition');
 
-
         $responseDownload = Http::get($latestVersion->dist_url);
-
 
         return response($responseDownload, 200, [
             'Content-Type' => $contentType,
             'Content-Disposition' => $contentDisposition,
-//            'Content-Length' => $contentLength,
         ]);
     }
 }
