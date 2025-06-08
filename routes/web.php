@@ -46,9 +46,12 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\Projects::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Projects::class, 'dashboard'])->name('dashboard');
     Route::post('/projects', [\App\Http\Controllers\Projects::class, 'store'])->name('projects.store');
     Route::get('/project/{project}', [\App\Http\Controllers\Projects::class, 'show'])->name('project.show');
     Route::post('/project/{project}/add-plugin', [\App\Http\Controllers\Projects::class, 'addPlugin'])->name('project.add-plugin');
     Route::post('/project/{project}/add-theme', [\App\Http\Controllers\Projects::class, 'addTheme'])->name('project.add-theme');
+    Route::get('/projects', [\App\Http\Controllers\Projects::class, 'list'])->name('projects.list');
+    Route::put('/projects/{project}', [\App\Http\Controllers\Projects::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{project}', [\App\Http\Controllers\Projects::class, 'destroy'])->name('projects.destroy');
 });
