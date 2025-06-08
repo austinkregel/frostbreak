@@ -20,6 +20,11 @@ class Project extends Model
         'owner_type',
     ];
 
+    protected $casts = [
+        'owner_id' => 'integer',
+    ];
+
+
     public function packages()
     {
         return $this->morphedByMany(Package::class, 'resourceable', 'marketplace_resourceables');

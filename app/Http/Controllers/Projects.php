@@ -8,9 +8,16 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Ramsey\Uuid\Nonstandard\Uuid;
+use App\Http\Requests\UpdateProjectRequest;
+use App\Http\Requests\DeleteProjectRequest;
 
 class Projects extends Controller
 {
+    private const PROJECTS_PER_PAGE = 10;
+    private const ERROR_NOT_FOUND = 'Project not found.';
+    private const SUCCESS_UPDATED = 'Project updated successfully!';
+    private const SUCCESS_DELETED = 'Project deleted successfully!';
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -76,5 +83,45 @@ class Projects extends Controller
         // Assuming a many-to-many relationship: $project->themes()
         $project->themes()->syncWithoutDetaching([$validated['id']]);
         return response()->json(['success' => true]);
+    }
+
+    public function list(Request $request)
+    {
+        $user = $request->user();
+        $projects = Project::query()
+            ->where('owner_id', $user->id)
+            ->where('owner_type', User::class)
+            ->paginate(self::PROJECTS_PER_PAGE);
+        return response()->json($projects);
+    }
+
+    public function update(UpdateProjectRequest $request, Project $project)
+    {
+        $project->name = $request->validated()['name'];
+        $project->save();
+        return inertia()->location(route('dashboard'))->with('success', self::SUCCESS_UPDATED);
+    }
+
+    public function destroy(DeleteProjectRequest $request, Project $project)
+    {
+        $project->delete();
+        return inertia()->location(route('dashboard'))->with('success', self::SUCCESS_DELETED);
+    }
+
+    public function dashboard(Request $request)
+    {
+        $user = $request->user();
+        $recentProjects = Project::query()
+            ->where('owner_id', $user->id)
+            ->where('owner_type', User::class)
+            ->orderByDesc('updated_at')
+            ->limit(5)
+            ->get();
+        return Inertia::render('Dashboard/Dashboard', [
+            'recentProjects' => $recentProjects,
+            'auth' => [
+                'user' => $user,
+            ],
+        ]);
     }
 }
