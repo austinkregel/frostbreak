@@ -26,7 +26,7 @@ class Project extends Model
     }
     public function plugins()
     {
-        return $this->packages();
+        return $this->packages();//->whereJsonContains('keywords', 'plugin');
     }
     public function themes()
     {
@@ -36,5 +36,9 @@ class Project extends Model
     public function user()
     {
         return $this->morphTo('owner');
+    }
+    public function owner()
+    {
+        return $this->morphTo('owner', 'owner_type', 'owner_id');
     }
 }

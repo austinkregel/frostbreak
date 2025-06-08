@@ -26,10 +26,10 @@ Route::withoutMiddleware([
 
     // Theme Endpoints
     Route::post('/theme/detail', [Themes::class, 'detail'])->name('kregel.root.theme.detail');
-    Route::post('/theme/get', [Themes::class, 'details'])->name('kregel.root.theme.get');
     Route::post('/theme/details', [Themes::class, 'details'])->name('kregel.root.theme.details');
     Route::post('/theme/popular', [Themes::class, 'popular'])->name('kregel.root.theme.popular');
     Route::post('/theme/search', [Themes::class, 'search'])->name('kregel.root.theme.search');
+    Route::post('/theme/get', [Themes::class, 'theme'])->name('kregel.root.theme.get');
 
     // Core and Project Endpoints
     Route::post('/core/update', [CoreUpdateController::class, 'handle'])->name('kregel.root.core.update');

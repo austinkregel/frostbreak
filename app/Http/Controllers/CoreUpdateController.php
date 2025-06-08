@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
  */
 class CoreUpdateController extends Controller
 {
+    public const WINTER_STORM_PACKAGE_CODE = 'Winter.Storm';
+
     public function handle(Request $request)
     {
         $coreHash = $request->get('core');
@@ -22,7 +24,7 @@ class CoreUpdateController extends Controller
         $actualThemes = is_array($themes) ? $themes : @unserialize($themes);
 
         // --- CORE (storm) ---
-        $corePackage = \App\Models\Package::where('code', 'storm')->first();
+        $corePackage = \App\Models\Package::where('code', static::WINTER_STORM_PACKAGE_CODE)->first();
         $coreVersions = $corePackage ? $corePackage->versions()->orderBy('released_at')->get() : collect();
         $coreLatest = $coreVersions->last();
         $coreCurrentVersion = $build;

@@ -11,7 +11,6 @@ use Ramsey\Uuid\Nonstandard\Uuid;
 
 class Projects extends Controller
 {
-
     public function index(Request $request)
     {
         $user = $request->user();

@@ -12,14 +12,18 @@ class ProfileInformationTest extends TestCase
 
     public function test_profile_information_can_be_updated(): void
     {
-        $this->actingAs($user = User::factory()->create());
+        $this->actingAs($user = User::factory()->create([
+            'name' => 'Old Name',
+            'email_verified_at' => now(),
+        ]));
 
-        $this->put('/user/profile-information', [
+        $response = $this->put('/user/profile-information', [
             'name' => 'Test Name',
             'email' => 'test@example.com',
         ]);
+        $response->assertFound();
 
-        $this->assertEquals('Test Name', $user->fresh()->name);
-        $this->assertEquals('test@example.com', $user->fresh()->email);
+        $this->assertEquals('Test Name', $user->refresh()->name);
+        $this->assertEquals('test@example.com', $user->refresh()->email);
     }
 }

@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Traits\Resource;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Scout\Searchable;
 
 class Package extends Model
 {
-    use SoftDeletes, Resource;
+    use SoftDeletes, Resource, HasFactory;
 
     protected $table = 'marketplace_packages';
 
