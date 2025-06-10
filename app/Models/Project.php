@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Scout\Searchable;
 
 class Project extends Model
 {
     /** @use HasFactory<\Database\Factories\ProjectFactory> */
-    use HasFactory;
+    use HasFactory, Searchable;
 
     protected $table = 'marketplace_projects';
 
@@ -20,13 +21,22 @@ class Project extends Model
         'owner_type',
     ];
 
+    protected $casts = [
+        'owner_id' => 'integer',
+    ];
+
+    public function toSearchableArray()
+    {
+        return $this->toArray();
+    }
+
     public function packages()
     {
         return $this->morphedByMany(Package::class, 'resourceable', 'marketplace_resourceables');
     }
     public function plugins()
     {
-        return $this->packages();//->whereJsonContains('keywords', 'plugin');
+        return $this->packages()->whereJsonContains('keywords', 'plugin');
     }
     public function themes()
     {

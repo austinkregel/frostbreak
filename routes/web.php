@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Package;
 use App\Http\Controllers\Packages;
 use App\Http\Controllers\CoreUpdateController;
-use App\Http\Controllers\MarketplaceProxyController;
 use App\Http\Controllers\Themes;
 use App\Http\Controllers\Versions;
 
@@ -39,16 +38,29 @@ Route::withoutMiddleware([
         ->name('kregel.root.changelog');
 });
 
-//Route::get('/')
+// Public landing page using Inertia
+Route::get('/', function () {
+    return inertia('Landing', [
+        'title' => 'Frostbreak Marketplace',
+        'subtitle' => 'A public marketplace for WinterCMS plugins and themes',
+        'notice' => '⚠️ This project is under heavy development. Not all features will work, but some will! Please report any issues you find.',
+    ]);
+})->name('home');
 
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\Projects::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Projects::class, 'dashboard'])->name('dashboard');
     Route::post('/projects', [\App\Http\Controllers\Projects::class, 'store'])->name('projects.store');
     Route::get('/project/{project}', [\App\Http\Controllers\Projects::class, 'show'])->name('project.show');
     Route::post('/project/{project}/add-plugin', [\App\Http\Controllers\Projects::class, 'addPlugin'])->name('project.add-plugin');
     Route::post('/project/{project}/add-theme', [\App\Http\Controllers\Projects::class, 'addTheme'])->name('project.add-theme');
+    Route::post('/project/{project}/remove-plugin', [\App\Http\Controllers\Projects::class, 'removePlugin'])->name('project.remove-plugin');
+    Route::post('/project/{project}/remove-theme', [\App\Http\Controllers\Projects::class, 'removeTheme'])->name('project.remove-theme');
+    Route::get('/projects', [\App\Http\Controllers\Projects::class, 'list'])->name('projects.list');
+    Route::put('/projects/{project}', [\App\Http\Controllers\Projects::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{project}', [\App\Http\Controllers\Projects::class, 'destroy'])->name('projects.destroy');
+    Route::get('/search', [\App\Http\Controllers\SearchController::class, 'index'])->name('search.index');
 });

@@ -10,7 +10,7 @@ use Laravel\Scout\Searchable;
 
 class Package extends Model
 {
-    use SoftDeletes, Resource, HasFactory;
+    use SoftDeletes, Resource, HasFactory, Searchable;
 
     protected $table = 'marketplace_packages';
 
@@ -63,4 +63,10 @@ class Package extends Model
 
         return $latestVersion->hash ?? null;
     }
+
+    public function toSearchableArray()
+    {
+        return $this->toArray();
+    }
 }
+

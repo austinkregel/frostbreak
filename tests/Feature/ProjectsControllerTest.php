@@ -29,7 +29,7 @@ class ProjectsControllerTest extends TestCase
         $response = $this->post(route('projects.store'), [
             'name' => 'Test Project',
         ]);
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('project.show', ['project' => 1]));
         $this->assertDatabaseHas('marketplace_projects', [
             'name' => 'Test Project',
             'owner_id' => $user->id,
@@ -47,8 +47,8 @@ class ProjectsControllerTest extends TestCase
         $response = $this->post(route('project.add-plugin', $project), [
             'id' => $plugin->id,
         ]);
-        $response->assertStatus(200);
-        $response->assertJson(['success' => true]);
+        $response->assertRedirect(route('project.show', ['project' => $project->id]));
+        $project->refresh();
         $this->assertTrue($project->plugins()->where('marketplace_packages.id', $plugin->id)->exists());
     }
 

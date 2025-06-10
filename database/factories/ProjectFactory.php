@@ -19,11 +19,9 @@ class ProjectFactory extends Factory
     {
         return [
             'name' => $this->faker->company,
-            'owner_type' => 'App\Models\User',
-            'owner_id' => User::factory(), // Assuming a user with ID 1 exists
-            'owner' => function (array $attributes) {
-                return (User::find($attributes['owner_id']) ?: User::factory()->create(['id' => $attributes['owner_id']]))['name'];
-            },
+            'owner_type' => 'App\\Models\\User',
+            'owner_id' => User::factory(),
+            'owner' => $this->faker->name(),
             'license_id' => $this->faker->uuid(),
         ];
     }

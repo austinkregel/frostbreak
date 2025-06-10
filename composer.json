@@ -14,7 +14,9 @@
         "laravel/framework": "^12.0",
         "laravel/jetstream": "*",
         "laravel/sanctum": "^4.0",
+        "laravel/scout": "^10.15",
         "laravel/tinker": "^2.10.1",
+        "meilisearch/meilisearch-php": "^1.14",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
@@ -44,7 +46,8 @@
             "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+            "@php artisan scout:sync-index-settings --ansi"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
