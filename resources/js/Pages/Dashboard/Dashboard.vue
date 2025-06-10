@@ -12,7 +12,7 @@
           <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
             <h3 class="text-lg font-bold mb-4 dark:text-white">Recent Projects</h3>
             <ul v-if="recentProjects.length" class="space-y-2">
-              <li v-for="project in recentProjects" :key="project.id" class="flex justify-between items-center">
+              <li v-for="project in recentProjects" :key="project.id" class="flex justify-between items-center dark:text-white">
                 <span class="truncate">{{ project.name }}</span>
                 <Link :href="`/project/${project.id}`" class="text-blue-600 dark:text-blue-400 underline">View</Link>
               </li>
@@ -40,6 +40,7 @@
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import AppLayout from "@/Layouts/AppLayout.vue";
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);

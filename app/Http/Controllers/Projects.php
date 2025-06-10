@@ -18,22 +18,12 @@ class Projects extends Controller
     private const SUCCESS_UPDATED = 'Project updated successfully!';
     private const SUCCESS_DELETED = 'Project deleted successfully!';
 
-    public function index(Request $request)
-    {
-        $user = $request->user();
-        $projects = Project::query()
-            ->where('owner_id', $user->id)
-            ->where('owner_type', User::class)
-            ->get();
-        return Inertia::render('Dashboard/Projects', [
-            'projects' => $projects,
-        ]);
-    }
     public function show(Request $request, Project $project)
     {
         $project->load(['user', 'packages', 'plugins', 'themes']);
         return Inertia::render('Dashboard/Project', [
             'project' => $project,
+
         ]);
     }
     public function detail(Request $request)
@@ -61,7 +51,7 @@ class Projects extends Controller
             'owner_type' => get_class($request->user()),
         ]);
 
-        return Inertia::location(route('dashboard'));;
+        return Inertia::location(route('project.show', ['project' => $project->id]));
         return redirect()->route('dashboard')->with('success', 'Project created successfully!');
     }
 
@@ -72,7 +62,7 @@ class Projects extends Controller
         ]);
         // Assuming a many-to-many relationship: $project->plugins()
         $project->plugins()->syncWithoutDetaching([$validated['id']]);
-        return response()->json(['success' => true]);
+        return inertia()->location(route('project.show', ['project' => $project->id]));
     }
 
     public function addTheme(Request $request, Project $project)
@@ -85,14 +75,37 @@ class Projects extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function removePlugin(Request $request, Project $project)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:marketplace_packages,id',
+        ]);
+        // Detach the plugin from the project
+        $project->plugins()->detach($validated['id']);
+        return response()->json(['success' => true]);
+    }
+
+    public function removeTheme(Request $request, Project $project)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:marketplace_packages,id',
+        ]);
+        // Detach the theme from the project
+        $project->themes()->detach($validated['id']);
+        return response()->json(['success' => true]);
+    }
+
     public function list(Request $request)
     {
         $user = $request->user();
-        $projects = Project::query()
-            ->where('owner_id', $user->id)
-            ->where('owner_type', User::class)
-            ->paginate(self::PROJECTS_PER_PAGE);
-        return response()->json($projects);
+        $projects = ($request->has('query') ? Project::search($request->get('query')) : Project::query())
+            ->orderByDesc('updated_at')
+            ->paginate()
+            ->withQueryString();
+
+        return Inertia::render('Dashboard/Projects', [
+            'projects' => $projects
+        ]);
     }
 
     public function update(UpdateProjectRequest $request, Project $project)
@@ -123,5 +136,30 @@ class Projects extends Controller
                 'user' => $user,
             ],
         ]);
+    }
+
+    public function searchApi(Request $request)
+    {
+        $user = $request->user();
+        $query = $request->input('query', '');
+        $perPage = (int) $request->input('per_page', 10);
+        $page = (int) $request->input('page', 1);
+
+        $projectsQuery = Project::query()
+            ->where('owner_id', $user->id)
+            ->where('owner_type', User::class);
+
+        if ($query) {
+            $projectsQuery->where(function ($q) use ($query) {
+                $q->where('name', 'like', "%$query%")
+                  ->orWhere('description', 'like', "%$query%") ;
+            });
+        }
+
+        $projects = $projectsQuery
+            ->orderByDesc('updated_at')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json($projects);
     }
 }
