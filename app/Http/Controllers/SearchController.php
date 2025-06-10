@@ -12,14 +12,11 @@ class SearchController extends Controller
     public function index(Request $request)
     {
         $query = $request->input('query', '');
-        $filter = $request->input('filter', 'all');
         $sortBy = $request->input('sortBy', 'downloads');
         $sortDirection = $request->input('direction', 'desc');
 
         $builder = Package::search($query);
-        if ($filter !== 'all') {
-            $builder->where('type', $filter === 'plugins' ? 'plugin' : 'theme');
-        }
+
         if ($sortBy !== 'relevance') {
             $builder->orderBy($sortBy, $sortDirection);
         }
@@ -34,7 +31,6 @@ class SearchController extends Controller
         return Inertia::render('Dashboard/Search', [
             'results' => $results,
             'query' => $query,
-            'filter' => $filter,
             'direction' => $sortDirection,
             'sortBy' => $sortBy,
             'projects' => $projects,

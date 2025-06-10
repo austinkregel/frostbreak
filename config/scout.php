@@ -148,7 +148,7 @@ return [
             \App\Models\Package::class => [
                 'sortableAttributes' => ['git_stars', 'downloads', 'git_watches', 'git_forks', 'favers', 'last_updated_at', 'created_at'],
                 'searchableAttributes' => ['name', 'description', 'code','keywords'],
-                'filterableAttributes' => ['name', 'description', 'code', 'keywords'],
+                'filterableAttributes' => ['id', 'name', 'description', 'code', 'keywords'],
             ],
             Project::class => [
                 'sortableAttributes' => ['updated_at'],

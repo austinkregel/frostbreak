@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use Ramsey\Uuid\Nonstandard\Uuid;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Http\Requests\DeleteProjectRequest;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class Projects extends Controller
 {
@@ -20,12 +21,34 @@ class Projects extends Controller
 
     public function show(Request $request, Project $project)
     {
-        $project->load(['user', 'packages', 'plugins', 'themes']);
+        $project->load(['user', 'plugins', 'themes']);
+        
         return Inertia::render('Dashboard/Project', [
             'project' => $project,
-
+            'themeSearchResults' => $this->search('themeSearch', $request, $project),
+            'pluginSearchResults' => $this->search('pluginSearch', $request, $project),
+            'pluginQuery' => $request->input('themeSearch', ''),
+            'pluginQuery' => $request->input('pluginSearch', ''),
         ]);
     }
+
+    protected function search(string $query, Request $request,  Project $project): LengthAwarePaginator
+    {
+        if (!$request->has($query)) {
+            return new LengthAwarePaginator([], 0, self::PROJECTS_PER_PAGE, 1);
+        }
+
+        $query = Package::search($request->input($query));
+
+        $query->whereNotIn('id', $project->plugins()->pluck('marketplace_packages.id')->concat($project->themes()->pluck('marketplace_packages.id')));
+
+        return $query->paginate(
+            $request->input('limit', 12),
+            'page',
+        );
+    }
+
+
     public function detail(Request $request)
     {
         $packageIds = $request->get('id', null);
