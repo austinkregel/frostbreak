@@ -38,7 +38,14 @@ Route::withoutMiddleware([
         ->name('kregel.root.changelog');
 });
 
-//Route::get('/')
+// Public landing page using Inertia
+Route::get('/', function () {
+    return inertia('Landing', [
+        'title' => 'Frostbreak Marketplace',
+        'subtitle' => 'A public marketplace for WinterCMS plugins and themes',
+        'notice' => '⚠️ This project is under heavy development. Not all features will work, but some will! Please report any issues you find.',
+    ]);
+})->name('home');
 
 Route::middleware([
     'auth:sanctum',

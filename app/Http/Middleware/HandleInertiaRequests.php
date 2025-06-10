@@ -35,9 +35,11 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $features = config('fortify.features');
+
         return [
             ...parent::share($request),
-            //
+            'fortify' => $features,
         ];
     }
 }
