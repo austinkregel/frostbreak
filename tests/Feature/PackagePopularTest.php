@@ -24,7 +24,7 @@ class PackagePopularTest extends TestCase
             ]);
         }
 
-        $response = $this->postJson('/marketplace/plugin/popular');
+        $response = $this->postJson(route('kregel.root.plugin.popular'));
         $response->assertStatus(200);
         $this->assertCount(10, $response->json());
 
@@ -39,7 +39,7 @@ class PackagePopularTest extends TestCase
             'keywords' => ['plugin'],
             'needs_additional_processing' => true,
         ]);
-        $response = $this->postJson('/marketplace/plugin/popular');
+        $response = $this->postJson(route('kregel.root.plugin.popular'));
         $response->assertStatus(200);
         $this->assertNotContains('should-be-excluded', array_column($response->json(), 'code'));
     }

@@ -12,7 +12,7 @@ class ThemeDetailsTest extends TestCase
 
     public function test_it_returns_empty_array_if_no_names_provided()
     {
-        $response = $this->postJson('/marketplace/theme/details', [
+        $response = $this->postJson(route('kregel.root.theme.details'), [
             'names' => [],
         ]);
         $response->assertStatus(200)
@@ -21,7 +21,7 @@ class ThemeDetailsTest extends TestCase
 
     public function test_it_returns_empty_array_if_no_themes_found()
     {
-        $response = $this->postJson('/marketplace/theme/details', [
+        $response = $this->postJson(route('kregel.root.theme.details'), [
             'names' => ['not-a-theme'],
         ]);
         $response->assertStatus(200)
@@ -41,7 +41,7 @@ class ThemeDetailsTest extends TestCase
             'needs_additional_processing' => false,
         ]);
 
-        $response = $this->postJson('/marketplace/theme/details', [
+        $response = $this->postJson(route('kregel.root.theme.details'), [
             'names' => ['theme-one', 'theme-two'],
         ]);
 

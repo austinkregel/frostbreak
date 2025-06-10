@@ -12,7 +12,7 @@ class PackageSearchTest extends TestCase
 
     public function test_it_returns_empty_array_if_no_packages_match_query()
     {
-        $response = $this->postJson('/marketplace/plugin/search', [
+        $response = $this->postJson(route('kregel.root.plugin.search'), [
             'query' => 'nonexistent',
         ]);
         $response->assertStatus(200)
@@ -36,7 +36,7 @@ class PackageSearchTest extends TestCase
             'keywords' => ['theme'],
         ]);
 
-        $response = $this->postJson('/marketplace/plugin/search', [
+        $response = $this->postJson(route('kregel.root.plugin.search'), [
             'query' => 'Super',
         ]);
         $response->assertStatus(200)
@@ -52,7 +52,7 @@ class PackageSearchTest extends TestCase
                 'keywords' => ['plugin'],
             ]);
         }
-        $response = $this->postJson('/marketplace/plugin/search', [
+        $response = $this->postJson(route('kregel.root.plugin.search'), [
             'query' => 'Plugin',
         ]);
         $response->assertStatus(200);

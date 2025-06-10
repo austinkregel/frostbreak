@@ -29,7 +29,7 @@ class CoreChangelogControllerTest extends TestCase
             'released_at' => now()->addDay(),
         ]);
 
-        $response = $this->getJson('/marketplace/changelog/main');
+        $response = $this->getJson(route('kregel.root.changelog', ['branch' => 'main']));
         $response->assertStatus(200)
             ->assertJsonFragment([
                 'build' => 'main-1.1.0',

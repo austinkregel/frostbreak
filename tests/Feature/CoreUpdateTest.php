@@ -20,7 +20,7 @@ class CoreUpdateTest extends TestCase
 
     public function test_it_returns_no_updates_if_no_core_package_exists()
     {
-        $response = $this->postJson('/marketplace/core/update', [
+        $response = $this->postJson(route('kregel.root.core.update'), [
             'core' => '1.0.0',
             'build' => '1.0.0',
         ]);
@@ -36,7 +36,7 @@ class CoreUpdateTest extends TestCase
             'semantic_version' => '1.0.0',
             'released_at' => now(),
         ]);
-        $response = $this->postJson('/marketplace/core/update', [
+        $response = $this->postJson(route('kregel.root.core.update'), [
             'core' => 'Winter.Storm',
             'build' => '1.0.0',
         ]);
@@ -58,7 +58,7 @@ class CoreUpdateTest extends TestCase
             'released_at' => '2024-02-01 00:00:00',
             'description' => 'Update 1.1.0',
         ]);
-        $response = $this->postJson('/marketplace/core/update', [
+        $response = $this->postJson(route('kregel.root.core.update'), [
             'core' => 'Winter.Storm',
             'build' => '1.0.0',
         ]);
@@ -81,7 +81,7 @@ class CoreUpdateTest extends TestCase
             'released_at' => '2024-02-01 00:00:00',
             'description' => 'Update 1.1.0',
         ]);
-        $response = $this->postJson('/marketplace/core/update', [
+        $response = $this->postJson(route('kregel.root.core.update'), [
             'core' => 'Winter.Storm',
             'build' => '1.0.0',
             'force' => true,

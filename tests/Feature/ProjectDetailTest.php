@@ -13,7 +13,7 @@ class ProjectDetailTest extends TestCase
 
     public function test_it_returns_404_if_project_not_found()
     {
-        $response = $this->postJson('/marketplace/project/detail', [
+        $response = $this->postJson(route('kregel.root.project.detail'), [
             'id' => 9999,
         ]);
         $response->assertStatus(404);
@@ -27,7 +27,7 @@ class ProjectDetailTest extends TestCase
         $project->plugins()->attach($plugin);
         $project->themes()->attach($theme);
 
-        $response = $this->postJson('/marketplace/project/detail', [
+        $response = $this->postJson(route('kregel.root.project.detail'), [
             'id' => $project->id,
         ]);
         $response->assertStatus(200)

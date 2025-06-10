@@ -13,7 +13,7 @@ class PluginThemeSearchTest extends TestCase
     public function test_plugin_search_returns_results_with_highlighted_query()
     {
         Package::factory()->create(['name' => 'HighlightPlugin', 'keywords' => ['plugin']]);
-        $response = $this->postJson('/marketplace/plugin/search', ['query' => 'Highlight']);
+        $response = $this->postJson(route('kregel.root.plugin.search'), ['query' => 'Highlight']);
         $response->assertStatus(200);
         $this->assertStringContainsString('Highlight', $response->getContent());
     }
@@ -21,14 +21,14 @@ class PluginThemeSearchTest extends TestCase
     public function test_theme_search_returns_results_with_highlighted_query()
     {
         Package::factory()->create(['name' => 'HighlightTheme', 'keywords' => ['theme']]);
-        $response = $this->postJson('/marketplace/theme/search', ['query' => 'Highlight']);
+        $response = $this->postJson(route('kregel.root.theme.search'), ['query' => 'Highlight']);
         $response->assertStatus(200);
         $this->assertStringContainsString('Highlight', $response->getContent());
     }
 
     public function test_search_returns_empty_for_no_results()
     {
-        $response = $this->postJson('/marketplace/plugin/search', ['query' => 'NoMatch']);
+        $response = $this->postJson(route('kregel.root.plugin.search'), ['query' => 'NoMatch']);
         $response->assertStatus(200);
         $this->assertEquals([], $response->json());
     }

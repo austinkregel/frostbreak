@@ -12,7 +12,7 @@ class ThemeDetailTest extends TestCase
 
     public function test_it_returns_404_if_theme_not_found()
     {
-        $response = $this->postJson('/marketplace/theme/detail', [
+        $response = $this->postJson(route('kregel.root.theme.detail'), [
             'name' => 'non-existent-theme',
         ]);
         $response->assertStatus(404);
@@ -25,7 +25,7 @@ class ThemeDetailTest extends TestCase
             'keywords' => ['theme'],
             'needs_additional_processing' => false,
         ]);
-        $response = $this->postJson('/marketplace/theme/detail', [
+        $response = $this->postJson(route('kregel.root.theme.detail'), [
             'name' => 'test-theme',
         ]);
         $response->assertStatus(200)

@@ -14,14 +14,14 @@ Route::withoutMiddleware([
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
         \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class
 ])
-    ->prefix('marketplace')
+    ->prefix('place')
     ->group(function () {
     // Plugin Endpoints
     Route::post('/plugin/detail', [Packages::class, 'detail'])->name('kregel.root.plugin.detail');
     Route::post('/plugin/details', [Packages::class, 'details'])->name('kregel.root.plugin.details');
     Route::post('/plugin/popular', [Packages::class, 'popular'])->name('kregel.root.plugin.popular');
     Route::post('/plugin/search', [Packages::class, 'search'])->name('kregel.root.plugin.search');
-    Route::post('/plugin/get', [Packages::class, 'package'])->name('kregel.root.plugin.package');
+    Route::post('/plugin/get', [Packages::class, 'package'])->name('kregel.root.plugin.get');
 
     // Theme Endpoints
     Route::post('/theme/detail', [Themes::class, 'detail'])->name('kregel.root.theme.detail');

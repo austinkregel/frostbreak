@@ -12,7 +12,7 @@ class ThemeSearchTest extends TestCase
 
     public function test_it_returns_empty_array_if_no_themes_match_query()
     {
-        $response = $this->postJson('/marketplace/theme/search', [
+        $response = $this->postJson(route('kregel.root.theme.search'), [
             'query' => 'nonexistent',
         ]);
         $response->assertStatus(200)
@@ -34,7 +34,7 @@ class ThemeSearchTest extends TestCase
             'keywords' => ['plugin'],
         ]);
 
-        $response = $this->postJson('/marketplace/theme/search', [
+        $response = $this->postJson(route('kregel.root.theme.search'), [
             'query' => 'Super',
         ]);
         $response->assertStatus(200)
@@ -50,7 +50,7 @@ class ThemeSearchTest extends TestCase
                 'keywords' => ['theme'],
             ]);
         }
-        $response = $this->postJson('/marketplace/theme/search', [
+        $response = $this->postJson(route('kregel.root.theme.search'), [
             'query' => 'Theme',
         ]);
         $response->assertStatus(200);

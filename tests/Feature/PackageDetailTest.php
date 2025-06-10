@@ -13,7 +13,7 @@ class PackageDetailTest extends TestCase
     /** @test */
     public function it_returns_404_if_package_not_found()
     {
-        $response = $this->postJson('/marketplace/plugin/detail', [
+        $response = $this->postJson(route('kregel.root.plugin.detail'), [
             'name' => 'non-existent-package',
         ]);
 
@@ -28,7 +28,7 @@ class PackageDetailTest extends TestCase
             'keywords' => ['plugin'],
         ]);
 
-        $response = $this->postJson('/marketplace/plugin/detail', [
+        $response = $this->postJson(route('kregel.root.plugin.detail'), [
             'name' => 'My.Plugin',
         ]);
 

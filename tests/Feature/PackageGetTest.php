@@ -14,7 +14,7 @@ class PackageGetTest extends TestCase
 
     public function test_it_returns_404_if_package_not_found()
     {
-        $response = $this->postJson('/marketplace/plugin/get', [
+        $response = $this->postJson(route('kregel.root.plugin.get'), [
             'name' => 'non-existent-package',
         ]);
         $response->assertStatus(404);
@@ -31,7 +31,7 @@ class PackageGetTest extends TestCase
             'package_id' => $package->id,
             'dist_url' => null,
         ]);
-        $response = $this->postJson('/marketplace/plugin/get', [
+        $response = $this->postJson(route('kregel.root.plugin.get'), [
             'name' => 'test-plugin',
         ]);
         $response->assertStatus(404)
@@ -57,7 +57,7 @@ class PackageGetTest extends TestCase
                 return Http::response('file-content', 200);
             },
         ]);
-        $response = $this->postJson('/marketplace/plugin/get', [
+        $response = $this->postJson(route('kregel.root.plugin.get'), [
             'name' => 'test-plugin',
         ]);
         $response->assertStatus(500)
@@ -89,7 +89,7 @@ class PackageGetTest extends TestCase
                 ]);
             },
         ]);
-        $response = $this->postJson('/marketplace/plugin/get', [
+        $response = $this->postJson(route('kregel.root.plugin.get'), [
             'name' => 'test-plugin',
         ]);
         $response->assertStatus(200);
