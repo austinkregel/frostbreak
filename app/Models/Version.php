@@ -48,4 +48,13 @@ class Version extends Model
     {
         return $this->belongsTo(Package::class, 'package_id');
     }
+
+    public function getCacheLocation()
+    {
+        $version = Str::slug($latestVersion->semantic_version ?? 'latest');
+
+        $packageDestination = storage_path('packages/' . $this->package->name);
+
+        return $packageDestination . '/' . $version . '.zip';
+    }
 }
