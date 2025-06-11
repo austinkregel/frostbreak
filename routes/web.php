@@ -14,7 +14,7 @@ Route::withoutMiddleware([
         \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
         \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class
 ])
-    ->prefix('marketplace')
+    ->prefix('place')
     ->group(function () {
     // Plugin Endpoints
     Route::post('/plugin/detail', [Packages::class, 'detail'])->name('kregel.root.plugin.detail');
@@ -28,7 +28,7 @@ Route::withoutMiddleware([
     Route::post('/theme/details', [Themes::class, 'details'])->name('kregel.root.theme.details');
     Route::post('/theme/popular', [Themes::class, 'popular'])->name('kregel.root.theme.popular');
     Route::post('/theme/search', [Themes::class, 'search'])->name('kregel.root.theme.search');
-    Route::post('/theme/get', [Themes::class, 'theme'])->name('kregel.root.theme.get');
+    Route::post('/theme/get', [Packages::class, 'package'])->name('kregel.root.theme.get');
 
     // Core and Project Endpoints
     Route::post('/core/update', [CoreUpdateController::class, 'handle'])->name('kregel.root.core.update');
