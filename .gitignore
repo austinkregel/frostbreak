@@ -24,3 +24,9 @@ Homestead.yaml
 npm-debug.log
 Thumbs.db
 yarn-error.log
+/archive/*
+/storage/packages/*/
+/storage/packages/*
+/storage/packages/*/*/*.zip
+/storage/packages/*/*
+/storage/downloads/*.zip
