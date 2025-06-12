@@ -19,7 +19,6 @@ class PackageSearchTest extends TestCase
             ->assertExactJson([]);
     }
 
-
     public function test_it_returns_matching_packages_for_query()
     {
         Package::factory()->create([
@@ -59,4 +58,3 @@ class PackageSearchTest extends TestCase
         $this->assertCount(10, $response->json());
     }
 }
-

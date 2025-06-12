@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Version extends Model
 {
@@ -47,5 +48,14 @@ class Version extends Model
     public function package()
     {
         return $this->belongsTo(Package::class, 'package_id');
+    }
+
+    public function getCacheLocation()
+    {
+        $version = Str::slug($this->semantic_version ?? 'latest');
+
+        $packageDestination = storage_path('packages/' . $this->package->name);
+
+        return $packageDestination . '/' . $version . '.zip';
     }
 }

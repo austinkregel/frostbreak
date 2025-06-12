@@ -36,4 +36,3 @@ class ProjectDetailTest extends TestCase
             ->assertJsonFragment(['id' => $theme->id]);
     }
 }
-

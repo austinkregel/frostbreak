@@ -5,9 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Filesystem\Filesystem;
 
 class Packages extends Controller
 {
+    public function __construct(protected Filesystem $files)
+    {
+    }
+
     public function details(Request $request)
     {
         $packageNames = $request->get('names', []);
@@ -59,23 +64,21 @@ class Packages extends Controller
     {
         $packageName = $request->get('name');
         $package = Package::query()
-            ->whereJsonContains('keywords', 'plugin')
-            ->whereJsonDoesntContain('keywords', 'october')
             ->where('needs_additional_processing', false)
             ->where('code', $packageName)
             ->firstOrFail();
+
         $latestVersion = $package->versions()->orderByDesc('released_at')->first();
 
         abort_if(empty($latestVersion->dist_url), 404, 'No distribution URL found for this package.');
-        $response = Http::head($latestVersion->dist_url);
-        if (!$response->successful()) {
-            return response()->json(['error' => 'Failed to fetch video headers'], 500);
-        }
-        // Get content type and content length
-        $contentType = $response->header('Content-Type', 'application/octet-stream');
-        $contentDisposition = $response->header('content-disposition');
+        $contentType = 'application/octet-stream';
+        $contentDisposition = 'attachment; filename="' . $package->name . '-' . $latestVersion->semantic_version . '.zip"';
 
-        $responseDownload = Http::get($latestVersion->dist_url);
+        $responseDownload = $this->files->get($latestVersion->getCacheLocation());
+
+        if ($latestVersion->hash !== md5($responseDownload)) {
+            abort(500, 'The downloaded package does not match the expected hash.');
+        }
 
         return response($responseDownload, 200, [
             'Content-Type' => $contentType,

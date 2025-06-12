@@ -57,4 +57,3 @@ class ThemeSearchTest extends TestCase
         $this->assertLessThanOrEqual(10, count($response->json()));
     }
 }
-

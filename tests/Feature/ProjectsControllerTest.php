@@ -67,5 +67,62 @@ class ProjectsControllerTest extends TestCase
         $response->assertJson(['success' => true]);
         $this->assertTrue($project->themes()->where('marketplace_packages.id', $theme->id)->exists());
     }
-}
 
+    public function test_cannot_add_plugin_to_another_users_project()
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $project = Project::factory()->for($owner, 'owner')->create();
+        $plugin = Package::factory()->create(['keywords' => ['plugin']]);
+        $this->actingAs($otherUser);
+        $response = $this->post(route('project.add-plugin', $project), [
+            'id' => $plugin->id,
+        ]);
+        $response->assertForbidden();
+        $this->assertFalse($project->plugins()->where('marketplace_packages.id', $plugin->id)->exists());
+    }
+
+    public function test_cannot_remove_plugin_from_another_users_project()
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $project = Project::factory()->for($owner, 'owner')->create();
+        $plugin = Package::factory()->create(['keywords' => ['plugin']]);
+        $project->plugins()->attach($plugin->id);
+        $this->actingAs($otherUser);
+        $response = $this->deleteJson(route('project.remove-plugin', $project), [
+            'id' => $plugin->id,
+        ]);
+        $response->assertForbidden();
+        $this->assertTrue($project->plugins()->where('marketplace_packages.id', $plugin->id)->exists());
+    }
+
+    public function test_cannot_add_theme_to_another_users_project()
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $project = Project::factory()->for($owner, 'owner')->create();
+        $theme = Package::factory()->create(['keywords' => ['theme']]);
+        $this->actingAs($otherUser);
+        $response = $this->post(route('project.add-theme', $project), [
+            'id' => $theme->id,
+        ]);
+        $response->assertForbidden();
+        $this->assertFalse($project->themes()->where('marketplace_packages.id', $theme->id)->exists());
+    }
+
+    public function test_cannot_remove_theme_from_another_users_project()
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $project = Project::factory()->for($owner, 'owner')->create();
+        $theme = Package::factory()->create(['keywords' => ['theme']]);
+        $project->themes()->attach($theme->id);
+        $this->actingAs($otherUser);
+        $response = $this->deleteJson(route('project.remove-theme', $project), [
+            'id' => $theme->id,
+        ]);
+        $response->assertForbidden();
+        $this->assertTrue($project->themes()->where('marketplace_packages.id', $theme->id)->exists());
+    }
+}

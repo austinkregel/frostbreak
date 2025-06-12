@@ -22,13 +22,12 @@ class Projects extends Controller
     public function show(Request $request, Project $project)
     {
         $project->load(['user', 'plugins', 'themes']);
-        
+
         return Inertia::render('Dashboard/Project', [
             'project' => $project,
             'themeSearchResults' => $this->search('themeSearch', $request, $project),
             'pluginSearchResults' => $this->search('pluginSearch', $request, $project),
             'pluginQuery' => $request->input('themeSearch', ''),
-            'pluginQuery' => $request->input('pluginSearch', ''),
         ]);
     }
 
@@ -54,8 +53,8 @@ class Projects extends Controller
         $packageIds = $request->get('id', null);
         return response()->json(
             Project::query()->with([
-                'plugins',
-                'themes'
+                'plugins.versions',
+                'themes.versions'
             ])->findOrFail($packageIds)
         );
     }
@@ -75,7 +74,6 @@ class Projects extends Controller
         ]);
 
         return Inertia::location(route('project.show', ['project' => $project->id]));
-        return redirect()->route('dashboard')->with('success', 'Project created successfully!');
     }
 
     public function addPlugin(Request $request, Project $project)
@@ -120,8 +118,9 @@ class Projects extends Controller
 
     public function list(Request $request)
     {
-        $user = $request->user();
         $projects = ($request->has('query') ? Project::search($request->get('query')) : Project::query())
+            ->whereOwnerId($request->user()?->id)
+            ->whereOwnerType(User::class)
             ->orderByDesc('updated_at')
             ->paginate()
             ->withQueryString();

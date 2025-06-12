@@ -1,11 +1,5 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $packages = \App\Models\Package::query()
-        ->where('code','JosephCrowell.Passage')
-        ->get();
-    dd($packages->first()->latestVersion);
-})->purpose('Display an inspiring quote');
+Schedule::command('kregel:test-packagist')->daily();

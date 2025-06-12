@@ -2,12 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\RepackageVersionInZipJob;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use App\Models\Package;
 use App\Services\PackagistClient;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -19,6 +21,8 @@ class TestPackagistCommand extends Command
 
     public function handle()
     {
+        $this->validateGithubCredentials();
+
         $client = new PackagistClient();
         $query = $this->ask('Enter search query for Packagist (default: wintercms)') ?: 'wintercms';
         $page = 1;
@@ -46,7 +50,7 @@ class TestPackagistCommand extends Command
                     continue;
                 }
                 // Match description
-                if (strpos($desc, 'winter cms') !== false || strpos($desc, 'wintercms') !== false) {
+                if (stripos($desc, 'winter cms') !== false || stripos($desc, 'wintercms') !== false) {
                     \Log::info('Package matches winter cms or wintercms in description: ' . $name);
                     $matches[] = $pkg;
                     continue;
@@ -58,7 +62,7 @@ class TestPackagistCommand extends Command
                     continue;
                 }
                 // Match description
-                if (strpos($desc, 'october cms') !== false || strpos($desc, 'octobercms') !== false) {
+                if (stripos($desc, 'october cms') !== false || stripos($desc, 'octobercms') !== false) {
                     \Log::info('Package matches winter cms or octobercms in description: ' . $name);
                     $matches[] = $pkg;
                     continue;
@@ -104,13 +108,11 @@ class TestPackagistCommand extends Command
                 \Log::info('Fetched metadata for package: ' . $pkg['name'], $meta);
                 // Store in Package model
                 // We need the code to be Vendor.Package formatted; we should be able to modify the PSR-4 autoloading to use this format
-                $codeish = Arr::first(array_keys($latestVersion['autoload']['psr-4'] ?? []));
-                if (empty($codeish) && isset($latestVersion['name'])) {
-                    $codeish = Str::before($latestVersion['name'], ':');
-                    $codeish = str_replace('\\', '.', trim($codeish, '\\'));
-                } else {
-                    $codeish = str_replace('\\', '.', trim($codeish, '\\'));
+                $standardCode = Arr::first(array_keys($latestVersion['autoload']['psr-4'] ?? []));
+                if (empty($standardCode) && isset($latestVersion['name'])) {
+                    $standardCode = Str::before($latestVersion['name'], ':');
                 }
+                $standardCode = str_replace('\\', '.', trim($standardCode, '\\'));
                 /** @var Package $packageModel */
                 $packageModel = Package::updateOrCreate(
                     [
@@ -120,7 +122,7 @@ class TestPackagistCommand extends Command
                         'description' => $pkg['description'] ?? null,
                         'image' => null, // No image in Packagist, placeholder
                         'author' => $vendor ?? null,
-                        'code' => $codeish,
+                        'code' => $standardCode,
                         'demo_url' => $meta['package']['homepage'] ?? null,
                         'product_url' => $meta['package']['repository'] ?? null,
                         'packagist_url' => $pkg['url'] ?? null,
@@ -132,78 +134,75 @@ class TestPackagistCommand extends Command
                         'git_watchers' => $meta['package']['github_watchers'] ?? 0,
                         'last_updated_at' => $latestVersion['time'] ?? null,
                         'abandoned' => isset($meta['package']['abandoned']) ?? false,
-                        'keywords' => array_values(array_unique(array_merge($latestVersion['keywords'] ?? [], array_filter([$type])))),
+                        'keywords' => array_values(array_filter($version['keywords'] ?? [], fn ($keyword) => in_array($keyword, ['plugin', 'theme']))),
                         'needs_additional_processing' => false,
                     ]
                 );
 
-                if (!str_contains($packageModel->code, '.')) {
-                    $packageModel->update(['needs_additional_processing' => true]);
-                }
-
                 $versions = array_values($meta['package']['versions'] ?? []);
+                $jobs = [];
                 foreach ($versions as $version) {
-                     if (isset($version['version'])) {
-                         $hash = cache()->rememberForever('hash'.$version['dist']['url'], fn () => md5(Http::withHeaders([
-                            'User-Agent' => 'Kregel/Marketplace',
-                            'Authorization' => 'Basic ' . base64_encode(env('GITHUB_USERNAME').':'.env("GITHUB_TOKEN")),
-                            'Accept' => 'application/vnd.github.v3+json',
-                         ])->get($version['dist']['url'])
-                         ->body()));
+                     if (empty($version['version'])) {
+                         // This shouldn't happen, but it could be a malformed package since it's an HTTP api
+                         dd($version);
+                     }
 
-
-                        $v = $packageModel->versions()->firstOrCreate(
-                            ['semantic_version' => $version['version']],
-                            [
-                                'requires' => $version['require'] ?? [],
-                                'requires_dev' => $version['require-dev'] ?? [],
-                                'suggests' => $version['suggest'] ?? [],
-                                'provides' => $version['extra'] ?? [],
-                                'conflicts' => $version['conflict'] ?? [],
-                                'replaces' => $version['replace'] ?? [],
-                                'tags' => $version['keywords'] ?? [],
-                                'installation_commands' => $version['extra']['installation-commands'] ?? [],
-                                'hash' => $hash,
-                                'license' => Arr::first($version['license'] ?? []) ?? 'unlicensed (closed source)',
-                                'description' => $version['description'] ?? null,
-                                'released_at' => $version['time'] ?? null,
-                                'dist_url' => $version['dist']['url'] ?? null,
-                            ],
-                        );
-
-                        $v->fill([
+                    $v = $packageModel->versions()->firstOrCreate(
+                        ['semantic_version' => $version['version']],
+                        [
                             'requires' => $version['require'] ?? [],
                             'requires_dev' => $version['require-dev'] ?? [],
                             'suggests' => $version['suggest'] ?? [],
                             'provides' => $version['extra'] ?? [],
                             'conflicts' => $version['conflict'] ?? [],
                             'replaces' => $version['replace'] ?? [],
-                            'tags' => $version['keywords'] ?? [],
+                            'tags' => array_values(array_filter($version['keywords'] ?? [], fn ($keyword) => in_array($keyword, ['plugin', 'theme']))),
                             'installation_commands' => $version['extra']['installation-commands'] ?? [],
-                            'hash' => $hash,
                             'license' => Arr::first($version['license'] ?? []) ?? 'unlicensed (closed source)',
                             'description' => $version['description'] ?? null,
                             'released_at' => $version['time'] ?? null,
                             'dist_url' => $version['dist']['url'] ?? null,
-                        ]);
-                        if ($v->isDirty()) {
-                            $v->save();
-                        }
-                        if ($v->wasRecentlyCreated) {
-                            $this->warn(' [*] Created new version: ' . $v->semantic_version . ' for package: ' . $pkg['name']);
-                        } else {
-                            $this->warn(' [*] Updated existing version: ' . $v->semantic_version . ' for package: ' . $pkg['name']);
-                        }
+                        ],
+                    );
 
-                        if ($latestVersion['source']['reference'] === $version['source']['reference']) {
-                            $packageModel->latest_version_id = $v->id ?? null;
-                            $packageModel->save();
-                        }
+                     $hasHadRecentChanges = isset($version['time']) && $v->released_at->isBefore(Carbon::parse($version['time']));
+
+                     if ($hasHadRecentChanges) {
+                        $this->warn(' [*] Package has had recent changes; marked for forced update ' . $pkg['name'] . ' - ' . $v->semantic_version);
+                         $v->fill([
+                             'requires' => $version['require'] ?? [],
+                             'requires_dev' => $version['require-dev'] ?? [],
+                             'suggests' => $version['suggest'] ?? [],
+                             'provides' => $version['extra'] ?? [],
+                             'conflicts' => $version['conflict'] ?? [],
+                             'replaces' => $version['replace'] ?? [],
+                             'tags' => array_values(array_filter($version['keywords'] ?? [], fn ($keyword) => in_array($keyword, ['plugin', 'theme']))),
+                             'installation_commands' => $version['extra']['installation-commands'] ?? [],
+                             'license' => Arr::first($version['license'] ?? []) ?? 'unlicensed (closed source)',
+                             'description' => $version['description'] ?? null,
+                             'dist_url' => $version['dist']['url'] ?? null,
+                             'released_at' => $version['time'],
+                         ]);
+                     }
+                    if ($v->isDirty()) {
+                        $v->save();
+                    }
+                    if ($v->wasRecentlyCreated) {
+                        $this->warn(' [*] Created new version: ' . $v->semantic_version . ' for package: ' . $pkg['name']);
                     } else {
-                         dd($version);
-                 }
+                        $this->warn(' [*] Updated existing version: ' . $v->semantic_version . ' for package: ' . $pkg['name']);
+                    }
+
+                    if ($latestVersion['source']['reference'] === $version['source']['reference']) {
+                        $packageModel->latest_version_id = $v->id ?? null;
+                        $packageModel->save();
+                    }
+
+                    // We only want to FORCE a download if the version we have was released before the packagist version.
+                    $jobs[] = new RepackageVersionInZipJob($packageModel, $v, force: $hasHadRecentChanges);
                 }
 
+                Bus::chain($jobs)->dispatch();
                 \Log::info('Stored or updated package: ' . $pkg['name']);
             }
         }
@@ -257,6 +256,15 @@ class TestPackagistCommand extends Command
         }
 
         dd($latestVersion);
+    }
+
+    protected function validateGithubCredentials(): void
+    {
+        if (empty(env('GITHUB_USERNAME')) || empty(env('GITHUB_TOKEN'))) {
+            $this->error('Please set GITHUB_USERNAME and GITHUB_TOKEN in your .env file.');
+            throw new \DomainException('Defined the GITHUB_USERNAME and GITHUB_TOKEN environment variables in your .env file.');
+            exit(1);
+        }
     }
 }
 

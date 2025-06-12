@@ -38,4 +38,3 @@ class PackageDetailTest extends TestCase
             ]);
     }
 }
-
