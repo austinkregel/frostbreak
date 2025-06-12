@@ -66,7 +66,6 @@ class RepackageVersionInZipJob implements ShouldQueue
             return;
         }
 
-
         $cloneProcess = new Process([
             'wget', $latestVersion->dist_url, '-O', $archive = $downloadCacheDirectory . '/' . Uuid::uuid4() . '.zip',
         ]);
@@ -130,6 +129,20 @@ class RepackageVersionInZipJob implements ShouldQueue
             }
         }
 
+        $keywordsToAdd = $package->keywords;
+        if (file_exists($directoryWhereTheCodeLives . '/Plugin.php')) {
+            $keywordsToAdd[] = 'plugin';
+        }
+
+        if (file_exists($directoryWhereTheCodeLives . '/theme.yaml')) {
+            $keywordsToAdd[] = 'theme';
+        }
+        $package->keywords = array_values(array_unique($keywordsToAdd));
+
+        if ($package->isDirty('keywords')) {
+            $package->save();
+        }
+
         $packageCode = strtolower(str_replace('.', '/', $originalCode));
 
         if (!$packageCode) {
@@ -137,13 +150,41 @@ class RepackageVersionInZipJob implements ShouldQueue
             return;
         }
 
+        // TODO: Possibly implement a hook or event to allow our system to do async operations
+
+        if (in_array('plugin', $package->keywords)) {
+            // If the package code is Winter.*, and the name is not winter/* we need to delete it.
+            // These packages will not be supported by this application.
+            if (Str::startsWith($packageCode, 'Winter.') && !Str::startsWith($package->name, 'winter/')) {
+                $this->error("  [!] Package code {$packageCode} does not match package name {$package->name}. Skipping.");
+                $package->versions->map(function ($version) {
+                    $version->delete();
+                });
+
+                $package->delete();
+                return;
+            }
+        }
+
         $authorCode = dirname($packageCode);
+
+        if (in_array('theme', $package->keywords)) {
+            // If it's really a theme we need to look at the theme.yaml file to get the name and lower case it to replace the packagecode.
+            $themeYamlPath = $directoryWhereTheCodeLives . '/theme.yaml';
+            if (file_exists($themeYamlPath)) {
+                $themeYamlContent = yaml_parse_file($themeYamlPath);
+                if (isset($themeYamlContent['name'])) {
+                    $packageCode = strtolower(str_replace(' ', '-', $themeYamlContent['name']));
+                    $this->info("  [!] Theme detected, using name from theme.yaml: {$packageCode}");
+                }
+            }
+        }
 
         $filesystem->makeDirectory($newFolderForCode = $packageCacheDirectory . '/' . $packageCode, 0755, true, true);
         // Rename extracted dir to target
         $filesystem->move($directoryWhereTheCodeLives, $newFolderForCode);
 
-        $this->info('  [!] Renamed directory to: ' . $newFolderForCode);
+        $this->info('  [!] Renamed directory inside zip to: ' . $newFolderForCode);
 
         $zipProcess = new Process([
             'zip', '-rm', $locationOfProcessedVersion, $packageCode

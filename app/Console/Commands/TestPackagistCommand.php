@@ -50,7 +50,7 @@ class TestPackagistCommand extends Command
                     continue;
                 }
                 // Match description
-                if (strpos($desc, 'winter cms') !== false || strpos($desc, 'wintercms') !== false) {
+                if (stripos($desc, 'winter cms') !== false || stripos($desc, 'wintercms') !== false) {
                     \Log::info('Package matches winter cms or wintercms in description: ' . $name);
                     $matches[] = $pkg;
                     continue;
@@ -62,7 +62,7 @@ class TestPackagistCommand extends Command
                     continue;
                 }
                 // Match description
-                if (strpos($desc, 'october cms') !== false || strpos($desc, 'octobercms') !== false) {
+                if (stripos($desc, 'october cms') !== false || stripos($desc, 'octobercms') !== false) {
                     \Log::info('Package matches winter cms or octobercms in description: ' . $name);
                     $matches[] = $pkg;
                     continue;
@@ -134,7 +134,7 @@ class TestPackagistCommand extends Command
                         'git_watchers' => $meta['package']['github_watchers'] ?? 0,
                         'last_updated_at' => $latestVersion['time'] ?? null,
                         'abandoned' => isset($meta['package']['abandoned']) ?? false,
-                        'keywords' => array_values(array_unique(array_merge($latestVersion['keywords'] ?? [], array_filter([$type])))),
+                        'keywords' => array_values(array_filter($version['keywords'] ?? [], fn ($keyword) => in_array($keyword, ['plugin', 'theme']))),
                         'needs_additional_processing' => false,
                     ]
                 );
@@ -156,7 +156,7 @@ class TestPackagistCommand extends Command
                             'provides' => $version['extra'] ?? [],
                             'conflicts' => $version['conflict'] ?? [],
                             'replaces' => $version['replace'] ?? [],
-                            'tags' => $version['keywords'] ?? [],
+                            'tags' => array_values(array_filter($version['keywords'] ?? [], fn ($keyword) => in_array($keyword, ['plugin', 'theme']))),
                             'installation_commands' => $version['extra']['installation-commands'] ?? [],
                             'license' => Arr::first($version['license'] ?? []) ?? 'unlicensed (closed source)',
                             'description' => $version['description'] ?? null,
@@ -176,7 +176,7 @@ class TestPackagistCommand extends Command
                              'provides' => $version['extra'] ?? [],
                              'conflicts' => $version['conflict'] ?? [],
                              'replaces' => $version['replace'] ?? [],
-                             'tags' => $version['keywords'] ?? [],
+                             'tags' => array_values(array_filter($version['keywords'] ?? [], fn ($keyword) => in_array($keyword, ['plugin', 'theme']))),
                              'installation_commands' => $version['extra']['installation-commands'] ?? [],
                              'license' => Arr::first($version['license'] ?? []) ?? 'unlicensed (closed source)',
                              'description' => $version['description'] ?? null,
