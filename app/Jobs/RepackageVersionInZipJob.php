@@ -137,7 +137,7 @@ class RepackageVersionInZipJob implements ShouldQueue
         if (file_exists($directoryWhereTheCodeLives . '/theme.yaml')) {
             $keywordsToAdd[] = 'theme';
         }
-        $package->keywords = arrayues(array_unique($keywordsToAdd));
+        $package->keywords = array_values(array_unique($keywordsToAdd));
 
         if ($package->isDirty('keywords')) {
             $package->save();
