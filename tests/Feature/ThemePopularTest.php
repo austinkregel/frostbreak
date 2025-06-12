@@ -21,7 +21,7 @@ class ThemePopularTest extends TestCase
                 'downloads' => 100 - $i,
             ]);
         }
-        $response = $this->postJson('/marketplace/theme/popular');
+        $response = $this->postJson(route('kregel.root.theme.popular'));
         $response->assertStatus(200);
         $this->assertCount(10, $response->json());
     }
@@ -33,9 +33,8 @@ class ThemePopularTest extends TestCase
             'keywords' => ['theme'],
             'needs_additional_processing' => true,
         ]);
-        $response = $this->postJson('/marketplace/theme/popular');
+        $response = $this->postJson(route('kregel.root.theme.popular'));
         $response->assertStatus(200);
         $this->assertNotContains('should-be-excluded', array_column($response->json(), 'name'));
     }
 }
-

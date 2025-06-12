@@ -20,7 +20,7 @@ class CoreUpdateTest extends TestCase
 
     public function test_it_returns_no_updates_if_no_core_package_exists()
     {
-        $response = $this->postJson('/marketplace/core/update', [
+        $response = $this->postJson(route('kregel.root.core.update'), [
             'core' => '1.0.0',
             'build' => '1.0.0',
         ]);
@@ -30,14 +30,14 @@ class CoreUpdateTest extends TestCase
 
     public function test_it_returns_no_updates_if_core_is_latest()
     {
-        $core = Package::factory()->create(['code' => 'Winter.Storm']);
+        $core = Package::factory()->create(['code' => 'wintercms/winter']);
         Version::factory()->create([
             'package_id' => $core->id,
             'semantic_version' => '1.0.0',
             'released_at' => now(),
         ]);
-        $response = $this->postJson('/marketplace/core/update', [
-            'core' => 'Winter.Storm',
+        $response = $this->postJson(route('kregel.root.core.update'), [
+            'core' => 'wintercms/winter',
             'build' => '1.0.0',
         ]);
         $response->assertStatus(200)
@@ -46,7 +46,7 @@ class CoreUpdateTest extends TestCase
 
     public function test_it_returns_updates_if_core_is_behind()
     {
-        $core = Package::factory()->create(['code' => 'Winter.Storm']);
+        $core = Package::factory()->create(['name' => 'wintercms/winter']);
         Version::factory()->create([
             'package_id' => $core->id,
             'semantic_version' => '1.0.0',
@@ -58,8 +58,8 @@ class CoreUpdateTest extends TestCase
             'released_at' => '2024-02-01 00:00:00',
             'description' => 'Update 1.1.0',
         ]);
-        $response = $this->postJson('/marketplace/core/update', [
-            'core' => 'Winter.Storm',
+        $response = $this->postJson(route('kregel.root.core.update'), [
+            'core' => 'wintercms/winter',
             'build' => '1.0.0',
         ]);
         $response->assertStatus(200)
@@ -68,7 +68,7 @@ class CoreUpdateTest extends TestCase
 
     public function test_it_returns_all_updates_if_force_is_true()
     {
-        $core = Package::factory()->create(['code' => 'Winter.Storm']);
+        $core = Package::factory()->create(['name' => 'wintercms/winter']);
         Version::factory()->create([
             'package_id' => $core->id,
             'semantic_version' => '1.0.0',
@@ -81,8 +81,8 @@ class CoreUpdateTest extends TestCase
             'released_at' => '2024-02-01 00:00:00',
             'description' => 'Update 1.1.0',
         ]);
-        $response = $this->postJson('/marketplace/core/update', [
-            'core' => 'Winter.Storm',
+        $response = $this->postJson(route('kregel.root.core.update'), [
+            'core' => 'wintercms/winter',
             'build' => '1.0.0',
             'force' => true,
         ]);

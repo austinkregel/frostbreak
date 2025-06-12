@@ -11,6 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\Process\Process;
 
 class RepackageVersionInZipJob implements ShouldQueue
@@ -44,11 +45,24 @@ class RepackageVersionInZipJob implements ShouldQueue
 
         $filesystem->makeDirectory($packageDestination = storage_path('packages/' . $package->name), 0755, true, true);
 
-        $locationOfProcessedVersion = $packageDestination . '/' . $version . '.zip';
+        $locationOfProcessedVersion = $latestVersion->getCacheLocation();
 
         // If the author code and current version exists as a zip we're skipping this package
-        if (!$this->force || file_exists($locationOfProcessedVersion)) {
+        if (file_exists($locationOfProcessedVersion)) {
             $this->warn("    [!] Skipping package already processed: {$package->name} - $locationOfProcessedVersion");
+
+            // We need to create md5 sum for the zip file, and save it to the version
+            $md5Hash = md5_file($locationOfProcessedVersion);
+
+            if ($latestVersion->hash === $md5Hash) {
+                $this->info("  [!] Package already processed with same hash: {$package->name}");
+                return;
+            }
+
+            $latestVersion->hash = $md5Hash;
+            $latestVersion->save();
+
+
             return;
         }
 
@@ -77,9 +91,24 @@ class RepackageVersionInZipJob implements ShouldQueue
             return;
         }
 
-        $this->info("  [!] Cloned package: {$package->name} to {$packageCacheDirectory}");
+        $output = explode("\n", $unzipProcess->getOutput());
 
-        $allDirs = $filesystem->directories($packageCacheDirectory);
+        if (count($output) > 3) {
+            $createdDirectoryLog = explode(" ", trim($output[2]));
+            $createdDirectoryLog = Arr::last($createdDirectoryLog);
+        }
+
+
+        $this->info("  [!] Cloned package: {$package->name} to {$packageCacheDirectory}/{$createdDirectoryLog}");
+
+        $allDirs = array_filter($dirs = $filesystem->directories($packageCacheDirectory), fn ($dir) => basename($dir) === basename($createdDirectoryLog));
+        if (empty($allDirs)) {
+            $this->error("  [!] No directories found in package directory for: {$package->name}");
+            dd($dirs, $allDirs);
+            return;
+        }
+
+
         if (count($allDirs) > 1) {
             $this->error("  [!] Multiple directories found in package directory for: {$package->name}");
             $this->error("  [!] Directories: " . implode(', ', $allDirs));
@@ -130,6 +159,10 @@ class RepackageVersionInZipJob implements ShouldQueue
         }
         $this->info("  [!] Zip file exists: {$locationOfProcessedVersion}");
 
+        // We need to create md5 sum for the zip file, and save it to the version
+        $md5Hash = md5_file($locationOfProcessedVersion);
+        $latestVersion->hash = $md5Hash;
+        $latestVersion->save();
 
         if (!$zipProcess->isSuccessful()) {
             $this->info($zipProcess->getOutput());

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Version extends Model
 {
@@ -51,7 +52,7 @@ class Version extends Model
 
     public function getCacheLocation()
     {
-        $version = Str::slug($latestVersion->semantic_version ?? 'latest');
+        $version = Str::slug($this->semantic_version ?? 'latest');
 
         $packageDestination = storage_path('packages/' . $this->package->name);
 

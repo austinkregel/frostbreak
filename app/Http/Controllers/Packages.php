@@ -5,9 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Filesystem\Filesystem;
 
 class Packages extends Controller
 {
+    public function __construct(protected Filesystem $files)
+    {
+    }
+
     public function details(Request $request)
     {
         $packageNames = $request->get('names', []);
@@ -69,7 +74,7 @@ class Packages extends Controller
         $contentType = 'application/octet-stream';
         $contentDisposition = 'attachment; filename="' . $package->name . '-' . $latestVersion->semantic_version . '.zip"';
 
-        $responseDownload = file_get_contents($latestVersion->getCacheLocation());
+        $responseDownload = $this->files->get($latestVersion->getCacheLocation());
 
         if ($latestVersion->hash !== md5($responseDownload)) {
             abort(500, 'The downloaded package does not match the expected hash.');

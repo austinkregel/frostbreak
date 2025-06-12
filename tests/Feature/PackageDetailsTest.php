@@ -12,7 +12,7 @@ class PackageDetailsTest extends TestCase
 
     public function test_it_returns_empty_array_if_no_names_provided()
     {
-        $response = $this->postJson('/marketplace/plugin/details', [
+        $response = $this->postJson(route('kregel.root.plugin.details'), [
             'names' => [],
         ]);
 
@@ -22,7 +22,7 @@ class PackageDetailsTest extends TestCase
 
     public function test_it_returns_empty_array_if_no_packages_found()
     {
-        $response = $this->postJson('/marketplace/plugin/details', [
+        $response = $this->postJson(route('kregel.root.plugin.details'), [
             'names' => ['not-a-package'],
         ]);
 
@@ -43,7 +43,7 @@ class PackageDetailsTest extends TestCase
             'needs_additional_processing' => false,
         ]);
 
-        $response = $this->postJson('/marketplace/plugin/details', [
+        $response = $this->postJson(route('kregel.root.plugin.details'), [
             'names' => ['My.PluginOne', 'My.PluginTwo'],
         ]);
 
@@ -52,4 +52,3 @@ class PackageDetailsTest extends TestCase
             ->assertJsonFragment(['code' => 'My.PluginTwo']);
     }
 }
-

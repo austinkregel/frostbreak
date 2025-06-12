@@ -21,7 +21,7 @@ Route::withoutMiddleware([
     Route::post('/plugin/details', [Packages::class, 'details'])->name('kregel.root.plugin.details');
     Route::post('/plugin/popular', [Packages::class, 'popular'])->name('kregel.root.plugin.popular');
     Route::post('/plugin/search', [Packages::class, 'search'])->name('kregel.root.plugin.search');
-    Route::post('/plugin/get', [Packages::class, 'package'])->name('kregel.root.plugin.package');
+    Route::post('/plugin/get', [Packages::class, 'package'])->name('kregel.root.plugin.get');
 
     // Theme Endpoints
     Route::post('/theme/detail', [Themes::class, 'detail'])->name('kregel.root.theme.detail');
@@ -31,6 +31,7 @@ Route::withoutMiddleware([
     Route::post('/theme/get', [Packages::class, 'package'])->name('kregel.root.theme.get');
 
     // Core and Project Endpoints
+    Route::post('/core/get', [CoreUpdateController::class, 'get'])->name('kregel.root.core.get');
     Route::post('/core/update', [CoreUpdateController::class, 'handle'])->name('kregel.root.core.update');
     Route::post('/project/detail', [\App\Http\Controllers\Projects::class, 'detail'])->name('kregel.root.project.detail');
 
@@ -64,3 +65,20 @@ Route::middleware([
     Route::delete('/projects/{project}', [\App\Http\Controllers\Projects::class, 'destroy'])->name('projects.destroy');
     Route::get('/search', [\App\Http\Controllers\SearchController::class, 'index'])->name('search.index');
 });
+// We need to define our own 404 route so we can identify routes that aren't making their way to our app.
+Route::fallback(function () {
+    info('404 Not Found: ' . request()->getPathInfo() . ' - ' . request()->getMethod(), [
+        'ip' => request()->ip(),
+        'user_agent' => request()->header('User-Agent'),
+        'path' => request()->getPathInfo(),
+        'method' => request()->getMethod(),
+
+    ]);
+    return response()->json([
+        'message' => 'Not Found',
+        'status' => 404,
+        'path' => request()->getPathInfo(),
+        'method' => request()->getMethod(),
+        'timestamp' => now()->toIso8601String(),
+    ], 404);
+})->name('not-found');

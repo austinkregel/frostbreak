@@ -53,32 +53,4 @@ class Themes extends Controller
             ->get();
         return response()->json($packages);
     }
-
-    public function theme(Request $request)
-    {
-        $packageName = $request->get('name');
-        $package = Package::query()
-            ->whereJsonContains('keywords', 'theme')
-            ->whereJsonDoesntContain('keywords', 'october')
-            ->where('needs_additional_processing', false)
-            ->where('code', $packageName)
-            ->firstOrFail();
-        $latestVersion = $package->versions()->orderByDesc('released_at')->first();
-
-        abort_if(empty($latestVersion->dist_url), 404, 'No distribution URL found for this package.');
-        $response = Http::head($latestVersion->dist_url);
-        if (!$response->successful()) {
-            return response()->json(['error' => 'Failed to fetch video headers'], 500);
-        }
-        // Get content type and content length
-        $contentType = $response->header('Content-Type', 'application/octet-stream');
-        $contentDisposition = $response->header('content-disposition');
-
-        $responseDownload = Http::get($latestVersion->dist_url);
-
-        return response($responseDownload, 200, [
-            'Content-Type' => $contentType,
-            'Content-Disposition' => $contentDisposition,
-        ]);
-    }
 }

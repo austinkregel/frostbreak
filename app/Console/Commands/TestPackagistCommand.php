@@ -9,6 +9,7 @@ use App\Models\Package;
 use App\Services\PackagistClient;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -139,6 +140,7 @@ class TestPackagistCommand extends Command
                 );
 
                 $versions = array_values($meta['package']['versions'] ?? []);
+                $jobs = [];
                 foreach ($versions as $version) {
                      if (empty($version['version'])) {
                          // This shouldn't happen, but it could be a malformed package since it's an HTTP api
@@ -197,9 +199,10 @@ class TestPackagistCommand extends Command
                     }
 
                     // We only want to FORCE a download if the version we have was released before the packagist version.
-                    dispatch(new RepackageVersionInZipJob($packageModel, $v, force: $hasHadRecentChanges));
+                    $jobs[] = new RepackageVersionInZipJob($packageModel, $v, force: $hasHadRecentChanges);
                 }
 
+                Bus::chain($jobs)->dispatch();
                 \Log::info('Stored or updated package: ' . $pkg['name']);
             }
         }
