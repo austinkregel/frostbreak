@@ -10,7 +10,15 @@ use Inertia\Inertia;
 use Ramsey\Uuid\Nonstandard\Uuid;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Http\Requests\DeleteProjectRequest;
+use App\Http\Requests\AddPluginRequest;
+use App\Http\Requests\AddThemeRequest;
+use App\Http\Requests\RemovePluginRequest;
+use App\Http\Requests\RemoveThemeRequest;
+use App\Http\Requests\ShowProjectRequest;
+use App\Http\Requests\DetailProjectRequest;
+use App\Http\Requests\StoreProjectRequest;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Repositories\ProjectRepositoryContract;
 
 class Projects extends Controller
 {
@@ -19,10 +27,16 @@ class Projects extends Controller
     private const SUCCESS_UPDATED = 'Project updated successfully!';
     private const SUCCESS_DELETED = 'Project deleted successfully!';
 
-    public function show(Request $request, Project $project)
-    {
-        $project->load(['user', 'plugins', 'themes']);
+    private ProjectRepositoryContract $projects;
 
+    public function __construct(ProjectRepositoryContract $projects)
+    {
+        $this->projects = $projects;
+    }
+
+    public function show(ShowProjectRequest $request, Project $project)
+    {
+        $project = $this->projects->findByIdWithRelations($project->id, ['user', 'plugins', 'themes']);
         return Inertia::render('Dashboard/Project', [
             'project' => $project,
             'themeSearchResults' => $this->search('themeSearch', $request, $project),
@@ -48,83 +62,62 @@ class Projects extends Controller
     }
 
 
-    public function detail(Request $request)
+    public function detail(DetailProjectRequest $request)
     {
         $packageIds = $request->get('id', null);
-        return response()->json(
-            Project::query()->with([
-                'plugins.versions',
-                'themes.versions'
-            ])->findOrFail($packageIds)
-        );
+        $project = $this->projects->findByIdWithRelations($packageIds, ['plugins.versions', 'themes.versions']);
+        return response()->json($project);
     }
 
-    public function store(Request $request)
+    public function store(StoreProjectRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
-        $project = $request->user()->projects()->create([
+        $validated = $request->validated();
+        $project = $this->projects->create([
             'name' => $validated['name'],
             'license_id' => Uuid::uuid4(),
             'owner' => $request->user()->name,
             'owner_id' => $request->user()->id,
             'owner_type' => get_class($request->user()),
         ]);
-
         return Inertia::location(route('project.show', ['project' => $project->id]));
     }
 
-    public function addPlugin(Request $request, Project $project)
+    public function addPlugin(AddPluginRequest $request, Project $project)
     {
-        $validated = $request->validate([
-            'id' => 'required|integer|exists:marketplace_packages,id',
-        ]);
-        // Assuming a many-to-many relationship: $project->plugins()
+        $validated = $request->validated();
         $project->plugins()->syncWithoutDetaching([$validated['id']]);
         return inertia()->location(route('project.show', ['project' => $project->id]));
     }
 
-    public function addTheme(Request $request, Project $project)
+    public function addTheme(AddThemeRequest $request, Project $project)
     {
-        $validated = $request->validate([
-            'id' => 'required|integer|exists:marketplace_packages,id',
-        ]);
-        // Assuming a many-to-many relationship: $project->themes()
+        $validated = $request->validated();
         $project->themes()->syncWithoutDetaching([$validated['id']]);
         return response()->json(['success' => true]);
     }
 
-    public function removePlugin(Request $request, Project $project)
+    public function removePlugin(RemovePluginRequest $request, Project $project)
     {
-        $validated = $request->validate([
-            'id' => 'required|integer|exists:marketplace_packages,id',
-        ]);
-        // Detach the plugin from the project
+        $validated = $request->validated();
         $project->plugins()->detach($validated['id']);
         return response()->json(['success' => true]);
     }
 
-    public function removeTheme(Request $request, Project $project)
+    public function removeTheme(RemoveThemeRequest $request, Project $project)
     {
-        $validated = $request->validate([
-            'id' => 'required|integer|exists:marketplace_packages,id',
-        ]);
-        // Detach the theme from the project
+        $validated = $request->validated();
         $project->themes()->detach($validated['id']);
         return response()->json(['success' => true]);
     }
 
     public function list(Request $request)
     {
-        $projects = ($request->has('query') ? Project::search($request->get('query')) : Project::query())
-            ->whereOwnerId($request->user()?->id)
-            ->whereOwnerType(User::class)
-            ->orderByDesc('updated_at')
-            ->paginate()
-            ->withQueryString();
-
+        $projects = $this->projects->paginateForUser(
+            $request->user()?->id,
+            User::class,
+            self::PROJECTS_PER_PAGE,
+            $request->get('query')
+        );
         return Inertia::render('Dashboard/Projects', [
             'projects' => $projects
         ]);
@@ -132,26 +125,22 @@ class Projects extends Controller
 
     public function update(UpdateProjectRequest $request, Project $project)
     {
-        $project->name = $request->validated()['name'];
-        $project->save();
+        $this->projects->update($project, [
+            'name' => $request->validated()['name']
+        ]);
         return inertia()->location(route('dashboard'))->with('success', self::SUCCESS_UPDATED);
     }
 
     public function destroy(DeleteProjectRequest $request, Project $project)
     {
-        $project->delete();
+        $this->projects->delete($project);
         return inertia()->location(route('dashboard'))->with('success', self::SUCCESS_DELETED);
     }
 
     public function dashboard(Request $request)
     {
         $user = $request->user();
-        $recentProjects = Project::query()
-            ->where('owner_id', $user->id)
-            ->where('owner_type', User::class)
-            ->orderByDesc('updated_at')
-            ->limit(5)
-            ->get();
+        $recentProjects = $this->projects->recentForUser($user->id, User::class, 5);
         return Inertia::render('Dashboard/Dashboard', [
             'recentProjects' => $recentProjects,
             'auth' => [
@@ -166,22 +155,7 @@ class Projects extends Controller
         $query = $request->input('query', '');
         $perPage = (int) $request->input('per_page', 10);
         $page = (int) $request->input('page', 1);
-
-        $projectsQuery = Project::query()
-            ->where('owner_id', $user->id)
-            ->where('owner_type', User::class);
-
-        if ($query) {
-            $projectsQuery->where(function ($q) use ($query) {
-                $q->where('name', 'like', "%$query%")
-                  ->orWhere('description', 'like', "%$query%") ;
-            });
-        }
-
-        $projects = $projectsQuery
-            ->orderByDesc('updated_at')
-            ->paginate($perPage, ['*'], 'page', $page);
-
+        $projects = $this->projects->paginateForUser($user->id, User::class, $perPage, $query);
         return response()->json($projects);
     }
 }

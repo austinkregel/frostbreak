@@ -25,7 +25,7 @@ class CoreUpdateController extends Controller
         $actualThemes = is_array($themes) ? $themes : @unserialize($themes);
 
         // --- CORE (wintercms/winter) ---
-        $corePackage = \App\Models\Package::where('code', static::WINTER_STORM_PACKAGE_CODE)->first();
+        $corePackage = \App\Models\Package::where('name', static::WINTER_STORM_PACKAGE_CODE)->first();
         $coreVersions = $corePackage ? $corePackage->versions()
             ->where('semantic_version', 'not like', 'dev-%')
             ->where('semantic_version', 'not like', '%-dev')
@@ -35,16 +35,13 @@ class CoreUpdateController extends Controller
         $coreLatest = $coreVersions->last(); // latest by released_at
         $coreUpdates = [];
         $coreHasUpdate = false;
-        $coreOldBuild = $coreCurrentVersion;
-        if ($corePackage && $coreLatest) {
-            $newerVersions = $coreVersions->filter(function($v) use ($coreCurrentVersion, $force) {
-                return $force || version_compare($v->semantic_version, $coreCurrentVersion, '>');
-            });
-            if ($newerVersions->count() > 0) {
-                $coreHasUpdate = true;
-                foreach ($newerVersions as $v) {
-                    $coreUpdates[$v->semantic_version] = $v->description;
-                }
+        $newerVersions = $coreVersions->filter(function($v) use ($coreCurrentVersion, $force) {
+            return $force || version_compare($v->semantic_version, $coreCurrentVersion, '>');
+        });
+        if ($newerVersions->count() > 0) {
+            $coreHasUpdate = true;
+            foreach ($newerVersions as $v) {
+                $coreUpdates[$v->semantic_version] = $v->description;
             }
         }
 
@@ -111,8 +108,6 @@ class CoreUpdateController extends Controller
             'hasUpdates' => $coreHasUpdate || collect($pluginsOut)->where('is_updatable', true)->isNotEmpty() || !empty($themesOut),
             'update' => $coreHasUpdate || collect($pluginsOut)->where('is_updatable', true)->isNotEmpty() || !empty($themesOut),
         ];
-
-        info('Core updates', $response);
 
         return response()->json($response);
     }

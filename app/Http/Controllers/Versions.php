@@ -36,7 +36,7 @@ class Versions extends Controller
             'description' => 'nullable|string',
             'hash' => 'nullable|string',
             'license' => 'nullable|string',
-            'package_id' => 'required|integer|exists:packages,id',
+            'package_id' => 'required|integer|exists:marketplace_packages,id',
         ]);
         $version = Version::create($data);
         return response()->json($version, 201);
@@ -60,7 +60,7 @@ class Versions extends Controller
             'description' => 'nullable|string',
             'hash' => 'nullable|string',
             'license' => 'nullable|string',
-            'package_id' => 'sometimes|required|integer|exists:packages,id',
+            'package_id' => 'sometimes|required|integer|exists:marketplace_packages,id',
         ]);
         $version->update($data);
         return response()->json($version);

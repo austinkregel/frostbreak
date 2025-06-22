@@ -129,6 +129,7 @@ class RepackageVersionInZipJob implements ShouldQueue
             }
         }
 
+        dd($originalCode, $package->code, $package->name);
         $keywordsToAdd = $package->keywords;
         if (file_exists($directoryWhereTheCodeLives . '/Plugin.php')) {
             $keywordsToAdd[] = 'plugin';

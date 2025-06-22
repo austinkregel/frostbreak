@@ -13,7 +13,7 @@ class ProjectPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -29,7 +29,7 @@ class ProjectPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -53,7 +53,7 @@ class ProjectPolicy
      */
     public function restore(User $user, Project $project): bool
     {
-        return false;
+        return true;
     }
 
     /**
