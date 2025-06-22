@@ -58,7 +58,7 @@ class ProjectCrudTest extends TestCase
             'name' => 'Project to Delete',
             'license_id' => '123e4567-e89b-12d3-a456-426614174000',
         ]);
-        
+
         $response = $this->actingAs($user)
             ->delete("/projects/{$project->id}");
         $response->assertRedirect();
@@ -67,3 +67,4 @@ class ProjectCrudTest extends TestCase
         ]);
     }
 }
+

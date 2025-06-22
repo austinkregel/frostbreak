@@ -75,7 +75,7 @@ class ProjectsControllerTest extends TestCase
         $project = Project::factory()->for($owner, 'owner')->create();
         $plugin = Package::factory()->create(['keywords' => ['plugin']]);
         $this->actingAs($otherUser);
-        $response = $this->post(route('project.add-plugin', $project), [
+        $response = $this->postJson(route('project.add-plugin', $project), [
             'id' => $plugin->id,
         ]);
         $response->assertForbidden();
@@ -90,7 +90,7 @@ class ProjectsControllerTest extends TestCase
         $plugin = Package::factory()->create(['keywords' => ['plugin']]);
         $project->plugins()->attach($plugin->id);
         $this->actingAs($otherUser);
-        $response = $this->deleteJson(route('project.remove-plugin', $project), [
+        $response = $this->postJson(route('project.remove-plugin', $project), [
             'id' => $plugin->id,
         ]);
         $response->assertForbidden();
@@ -104,7 +104,7 @@ class ProjectsControllerTest extends TestCase
         $project = Project::factory()->for($owner, 'owner')->create();
         $theme = Package::factory()->create(['keywords' => ['theme']]);
         $this->actingAs($otherUser);
-        $response = $this->post(route('project.add-theme', $project), [
+        $response = $this->postJson(route('project.add-theme', $project), [
             'id' => $theme->id,
         ]);
         $response->assertForbidden();
@@ -119,7 +119,7 @@ class ProjectsControllerTest extends TestCase
         $theme = Package::factory()->create(['keywords' => ['theme']]);
         $project->themes()->attach($theme->id);
         $this->actingAs($otherUser);
-        $response = $this->deleteJson(route('project.remove-theme', $project), [
+        $response = $this->postJson(route('project.remove-theme', $project), [
             'id' => $theme->id,
         ]);
         $response->assertForbidden();
