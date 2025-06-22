@@ -20,7 +20,7 @@ class PackagistService
         $page = 1;
         $matches = [];
         do {
-            $result = cache()->remember('packagist-search.'.$query.$page, now()->addMinutes(30), fn () => $this->client->search($query, $page));
+            $result = $this->client->search($query, $page);
             if (empty($result['results'])) {
                 \Log::info('No results returned from Packagist search.');
                 break;
@@ -29,7 +29,11 @@ class PackagistService
                 $name = $pkg['name'] ?? '';
                 $tags = array_map('strtolower', $pkg['tags'] ?? []);
                 // Match wn- prefix after author, or wintercms tag
-                if (!in_array('wintercms', $tags) || !preg_match('#^[^/]+/wn-[^/]+#', $name)) {
+                if (
+                    !preg_match('#^[^/]+/wn-[^/]+#', $name)
+                    && !str_starts_with($name, 'wintercms/')
+                    && !str_starts_with($name, 'winter/')
+                ) {
                     continue;
                 }
 

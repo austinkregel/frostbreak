@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Jobs\RepackageVersionInZipJob;
 use App\Models\Package;
+use App\Services\PackagistClient;
 use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
@@ -36,6 +37,8 @@ class PackageRepository
 
             Bus::chain($jobs)->dispatch();
         }
+
+        return [];
     }
 
     public function syncPackageAndQueueRepackageZip(array $pkg): array
@@ -43,7 +46,7 @@ class PackageRepository
         $this->filesystem->makeDirectory($versionCache = storage_path('packages/'.$pkg['name']), 0755, true, true);
 
         [$vendor, $package] = explode('/', $pkg['name'], 2);
-        $meta = cache()->remember($package, now()->addMinutes(40), fn() => $this->client->getPackage($vendor, $package));
+        $meta = app(PackagistClient::class)->getPackage($vendor, $package);
         if (empty($meta)) {
             \Log::warning('No metadata found for package: ' . $pkg['name']);
             return [];
@@ -57,7 +60,7 @@ class PackageRepository
         $latestVersion = Arr::first($versionsSortedByTime);
 
         $type = $this->getTypeFromPackage($latestVersion);
-        \Log::info('Fetched metadata for package: ' . $pkg['name'], $meta);
+        \Log::info('Fetched metadata for package: ' . $pkg['name']);
         // Store in Package model
         // We need the code to be Vendor.Package formatted; we should be able to modify the PSR-4 autoloading to use this format
         $standardCode = Arr::first(array_keys($latestVersion['autoload']['psr-4'] ?? []));
@@ -218,7 +221,7 @@ class PackageRepository
 
         $composerType = $latestVersion['type'] ?? '';
 
-        if (str_ends_with($composerType, 'plugin')) {
+        if (str_ends_with($composerType, 'plugin') || str_ends_with($composerType, 'module')) {
             return 'plugin';
         }
 

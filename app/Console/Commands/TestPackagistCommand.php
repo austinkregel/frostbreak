@@ -24,9 +24,17 @@ class TestPackagistCommand extends Command
 
         $matches = (new PackagistService(new PackagistClient()))->search($query);
 
-        $filesystem = new Filesystem();
+        app(PackageRepository::class)->syncPackages($matches);
+    }
 
-        (new PackageRepository($filesystem))->syncPackages($matches);
+
+    protected function validateGithubCredentials(): void
+    {
+        if (empty(env('GITHUB_USERNAME')) || empty(env('GITHUB_TOKEN'))) {
+            $this->error('Please set GITHUB_USERNAME and GITHUB_TOKEN in your .env file.');
+            throw new \DomainException('Defined the GITHUB_USERNAME and GITHUB_TOKEN environment variables in your .env file.');
+            exit(1);
+        }
     }
 }
 

@@ -118,18 +118,17 @@ class RepackageVersionInZipJob implements ShouldQueue
         // --- Directory renaming and zipping logic ---
         // Convert package code (e.g., Winter.Users) to directory path (winter/users)
         $originalCode = $package->code ?? null;
-        if (!$originalCode) {
-            // Try to extract from Plugin.php if not set
-            if (file_exists($directoryWhereTheCodeLives . '/Plugin.php')) {
-                $content = file_get_contents($directoryWhereTheCodeLives . '/Plugin.php');
-                preg_match('/namespace\s+([^;]+);/', $content, $matches);
-                if (isset($matches[1])) {
-                    $originalCode = str_replace('\\', '.', $matches[1]);
-                }
+        // Try to extract from Plugin.php if not set
+        if (file_exists($directoryWhereTheCodeLives . '/Plugin.php')) {
+            $content = file_get_contents($directoryWhereTheCodeLives . '/Plugin.php');
+            preg_match('/namespace\s+([^;]+);/', $content, $matches);
+            if (isset($matches[1])) {
+                $originalCode = str_replace('\\', '.', $matches[1]);
+            } else {
+                dd($originalCode, $package->code, $package->name, $matches);
             }
         }
 
-        dd($originalCode, $package->code, $package->name);
         $keywordsToAdd = $package->keywords;
         if (file_exists($directoryWhereTheCodeLives . '/Plugin.php')) {
             $keywordsToAdd[] = 'plugin';
