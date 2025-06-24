@@ -38,7 +38,6 @@ return [
             'report' => false,
         ],
 
-
         'app' => [
             'driver' => 'local',
             'root' => base_path(),
@@ -68,7 +67,30 @@ return [
             'throw' => false,
             'report' => false,
         ],
-
+        'packages' => [
+            'driver' => 'local',
+            'root' => storage_path('packages'),
+            'url' => '/packages',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+        'archive' => [
+            'driver' => 'local',
+            'root' => storage_path('archive'),
+            'serve' => true,
+            'throw' => false,
+            'visibility' => 'public',
+            'report' => false,
+        ],
+        'downloads' => [
+            'driver' => 'local',
+            'root' => storage_path('downloads'),
+            'serve' => true,
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
     ],
 
     /*
