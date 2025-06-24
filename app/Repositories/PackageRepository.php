@@ -9,6 +9,7 @@ use App\Models\Package;
 use App\Services\PackagistClient;
 use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
@@ -17,8 +18,14 @@ use Illuminate\Support\Str;
 class PackageRepository
 {
     public function __construct(
-        protected Filesystem $filesystem,
+        protected FilesystemManager $manager,
+        protected mixed $packageFilesystem,
+        protected mixed $downloadFilesystem,
+        protected mixed $archiveFilesystem
     ) {
+        $this->packageFilesystem = $manager->disk('packages');
+        $this->downloadFilesystem = $manager->disk('downloads');
+        $this->archiveFilesystem = $manager->disk('archive');
     }
 
     public function updateOrCreate(array $attributes, array $values = []): Package
@@ -30,12 +37,23 @@ class PackageRepository
      * Filter packages based on domain rules (customize as needed).
      * Logs filtered out or unknown cases for observability.
      */
-    public function syncPackages(array $packages): array
+    public function syncPackages(array $packages, bool $sync = false): array
     {
         foreach ($packages as $pkg) {
             $jobs = $this->syncPackageAndQueueRepackageZip($pkg);
 
-            Bus::chain($jobs)->dispatch();
+            if (empty($jobs)) {
+                continue;
+            }
+
+            info('Launching ' . count($jobs) . ' jobs for package: ' . $pkg['name']);
+            if ($sync) {
+                foreach ($jobs as $job) {
+                    dispatch_sync($job);
+                }
+            } else {
+                Bus::chain($jobs)->dispatch();
+            }
         }
 
         return [];
@@ -43,8 +61,6 @@ class PackageRepository
 
     public function syncPackageAndQueueRepackageZip(array $pkg): array
     {
-        $this->filesystem->makeDirectory($versionCache = storage_path('packages/'.$pkg['name']), 0755, true, true);
-
         [$vendor, $package] = explode('/', $pkg['name'], 2);
         $meta = app(PackagistClient::class)->getPackage($vendor, $package);
         if (empty($meta)) {
@@ -61,13 +77,6 @@ class PackageRepository
 
         $type = $this->getTypeFromPackage($latestVersion);
         \Log::info('Fetched metadata for package: ' . $pkg['name']);
-        // Store in Package model
-        // We need the code to be Vendor.Package formatted; we should be able to modify the PSR-4 autoloading to use this format
-        $standardCode = Arr::first(array_keys($latestVersion['autoload']['psr-4'] ?? []));
-        if (empty($standardCode) && isset($latestVersion['name'])) {
-            $standardCode = Str::before($latestVersion['name'], ':');
-        }
-
         // Remove any theme or plugin keywords from the list of keywords,  and then add our own indicator
         $keywords = array_values(
             array_unique(
@@ -81,9 +90,8 @@ class PackageRepository
             )
         );
 
-        $standardCode = str_replace(['\\', '/'], ['.', '.'], trim($standardCode, '\\'));
         /** @var Package $packageModel */
-        $packageModel = Package::updateOrCreate(
+        $packageModel = Package::firstOrCreate(
             [
                 'name' => $pkg['name'],
             ],
@@ -91,7 +99,7 @@ class PackageRepository
                 'description' => $pkg['description'] ?? null,
                 'image' => null, // No image in Packagist, placeholder
                 'author' => $vendor ?? null,
-                'code' => $standardCode,
+                'code' => 'later',
                 'demo_url' => $meta['package']['homepage'] ?? null,
                 'product_url' => $meta['package']['repository'] ?? null,
                 'packagist_url' => $pkg['url'] ?? null,
@@ -107,6 +115,17 @@ class PackageRepository
                 'needs_additional_processing' => false,
             ]
         );
+
+        $lastUpdatedAt = $packageModel?->last_updated_at?->format('Y-m-d H:i') ?? null;
+
+        if (
+            isset($lastUpdatedAt)
+            && !$packageModel->wasRecentlyCreated
+            && $lastUpdatedAt === Carbon::parse($latestVersion['time'])->format('Y-m-d H:i')
+        ) {
+            info("No changes detected for package since our last update: {$packageModel->name}");
+            return []; // No update needed
+        }
 
         $versions = array_values($meta['package']['versions'] ?? []);
         $jobs = [];
@@ -149,6 +168,7 @@ class PackageRepository
             }
             if ($v->isDirty()) {
                 $v->save();
+                info("Updated version {$v->semantic_version} for package: {$packageModel->name}");
             }
 
             if ($latestVersion['source']['reference'] === $version['source']['reference']) {
@@ -164,24 +184,6 @@ class PackageRepository
         return $jobs;
     }
 
-    /**
-     * Determine if a package should be included (customize domain logic here).
-     */
-    protected function shouldIncludePackage(array $package): bool
-    {
-        // Add domain-specific rules as needed
-        return true;
-    }
-
-    /**
-     * Log unknown cases for observability.
-     */
-    public function logUnknownCase(array $context): void
-    {
-        Log::error('Unknown package case encountered', $context);
-    }
-
-
     protected function getTypeFromPackage(array|null $latestVersion)
     {
         if (empty($latestVersion)) {
@@ -191,7 +193,6 @@ class PackageRepository
         if (str_ends_with($latestVersion['name'], 'docs')) {
             return null;
         }
-
 
         if (str_ends_with($latestVersion['name'], 'plugin')) {
             return 'plugin';
@@ -230,14 +231,5 @@ class PackageRepository
         }
 
         dd($latestVersion);
-    }
-
-    protected function validateGithubCredentials(): void
-    {
-        if (empty(env('GITHUB_USERNAME')) || empty(env('GITHUB_TOKEN'))) {
-            $this->error('Please set GITHUB_USERNAME and GITHUB_TOKEN in your .env file.');
-            throw new \DomainException('Defined the GITHUB_USERNAME and GITHUB_TOKEN environment variables in your .env file.');
-            exit(1);
-        }
     }
 }

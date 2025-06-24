@@ -46,7 +46,7 @@
                       <button @click="addToProject(theme, 'theme')" class="ml-2 px-2 py-1 text-xs rounded bg-blue-500 text-white hover:bg-blue-600">Add</button>
                     </li>
                   </ul>
-                </div>               
+                </div>
                  <div v-else-if="themeSearch" class="text-gray-400 dark:text-gray-500 italic py-2 border-l border-r border-b border-dashed border-gray-200 dark:border-gray-700 rounded-b px-4">
                     <span class="font-semibold">No results found</span> for "{{ themeSearch }}". Try a different search term.
                 </div>
@@ -64,7 +64,7 @@
             <ul v-if="project.plugins.length" class="mb-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
               <li v-for="plugin in project.plugins" :key="plugin.id" class="py-2 px-4 flex flex-col gap-1 relative group">
                 <div class="flex items-center justify-between">
-                  <span class="font-medium text-gray-800 dark:text-gray-100">{{ plugin.title || plugin.name }}</span>
+                  <span class="font-medium text-gray-800 dark:text-gray-100">{{ plugin.code }}</span>
                   <button @click="removeFromProject(plugin, 'plugin')" class="opacity-60 group-hover:opacity-100 transition ml-2 text-red-600 hover:text-red-800 dark:hover:text-red-400" title="Remove plugin">
                     <TrashIcon class="h-5 w-5" />
                   </button>
@@ -96,7 +96,7 @@
                 <div v-else class="text-gray-400 dark:text-gray-500 italic py-2 2 border-l border-r border-b border-dashed border-gray-200 dark:border-gray-700 rounded-b px-4">
                     Start typing to search for plugins to add.
                 </div>
-                
+
               </div>
               <!-- Plugin Search Results -->
             </div>

@@ -18,17 +18,17 @@ class ClearDownloadedAndStoredPackagesCommand extends Command
     {
         $filesystem = $manager->disk('app');
 
-        if (!$filesystem->deleteDirectory('archive')) {
+        if (!$filesystem->deleteDirectory('storage/archive')) {
             $this->error('Failed to clear the archive directory. It may not exist.');
             return;
         }
 
-        if (file_exists(base_path('archive'))) {
+        if ($filesystem->exists('storage/archive')) {
             $this->error('Failed to delete the archive directory. It may not be empty or there may be permission issues.');
-            dd();
+            return;
         }
 
-        if (!$filesystem->makeDirectory('archive')) {
+        if (!$filesystem->makeDirectory('storage/archive')) {
             $this->error('Failed to recreate the archive directory.');
             return;
         }
@@ -38,7 +38,7 @@ class ClearDownloadedAndStoredPackagesCommand extends Command
             $this->error('Failed to clear the downloads directory. It may not exist.');
             return;
         }
-        if (!$filesystem->makeDirectory(storage_path('downloads'))) {
+        if (!$filesystem->makeDirectory('storage/downloads')) {
             $this->error('Failed to recreate the downloads directory.');
             return;
         }

@@ -14,7 +14,7 @@ class ProjectRepository implements ProjectRepositoryContract
 
     public function findByIdWithRelations($id, array $relations = []): ?Project
     {
-        return Project::with($relations)->find($id);
+        return Project::with($relations)->firstWhere('license_id', $id);
     }
 
     public function create(array $data): Project

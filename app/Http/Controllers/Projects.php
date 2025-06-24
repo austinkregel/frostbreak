@@ -36,7 +36,7 @@ class Projects extends Controller
 
     public function show(ShowProjectRequest $request, Project $project)
     {
-        $project = $this->projects->findByIdWithRelations($project->id, ['user', 'plugins', 'themes']);
+        $project = $this->projects->findByIdWithRelations($project->license_id, ['user', 'plugins', 'themes']);
         return Inertia::render('Dashboard/Project', [
             'project' => $project,
             'themeSearchResults' => $this->search('themeSearch', $request, $project),
@@ -65,7 +65,11 @@ class Projects extends Controller
     public function detail(DetailProjectRequest $request)
     {
         $packageIds = $request->get('id', null);
+
         $project = $this->projects->findByIdWithRelations($packageIds, ['plugins.versions', 'themes.versions']);
+
+        $project->setRelation('plugins', $project->plugins->map->name);
+
         return response()->json($project);
     }
 
@@ -79,14 +83,14 @@ class Projects extends Controller
             'owner_id' => $request->user()->id,
             'owner_type' => get_class($request->user()),
         ]);
-        return Inertia::location(route('project.show', ['project' => $project->id]));
+        return Inertia::location(route('project.show', ['project' => $project->license_id]));
     }
 
     public function addPlugin(AddPluginRequest $request, Project $project)
     {
         $validated = $request->validated();
         $project->plugins()->syncWithoutDetaching([$validated['id']]);
-        return inertia()->location(route('project.show', ['project' => $project->id]));
+        return inertia()->location(route('project.show', ['project' => $project->license_id]));
     }
 
     public function addTheme(AddThemeRequest $request, Project $project)

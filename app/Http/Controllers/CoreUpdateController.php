@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Package;
+use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Core Update Controller Backend Controller
@@ -23,7 +26,8 @@ class CoreUpdateController extends Controller
 
         $actualPlugins = is_array($plugins) ? $plugins : @unserialize($plugins);
         $actualThemes = is_array($themes) ? $themes : @unserialize($themes);
-
+        $projectId = $request->has('project') ? $request->get('project') : null;
+        $project = $request->has('project') ? Project::firstWhere('license_id', $projectId):  null;
         // --- CORE (wintercms/winter) ---
         $corePackage = \App\Models\Package::where('name', static::WINTER_STORM_PACKAGE_CODE)->first();
         $coreVersions = $corePackage ? $corePackage->versions()
@@ -55,11 +59,16 @@ class CoreUpdateController extends Controller
                 info('Found package for plugin: ' . $code . ' - ' . ($package ? $package->name : 'not found'));
 
                 if ($package) {
-                    $latest = $package->versions()
+                    $latestStable = $package->versions()
                         ->where('semantic_version', 'not like', 'dev-%')
                         ->where('semantic_version', 'not like', '%-dev')
                         ->orderByDesc('released_at')
                         ->first();
+                    $latest = $latestStable ?: $package->versions()
+                        ->orderByDesc('released_at')
+                        ->first();
+
+
                     $isUpdatable = $latest && ($force || version_compare($latest->semantic_version, $clientVersion, '>'));
                     info('Latest version for plugin ' . $code . ': ' . ($latest ? $latest->semantic_version : 'not found'));
                     $pluginsOut[$code] = [
@@ -68,10 +77,62 @@ class CoreUpdateController extends Controller
                         'hash' => $latest ? $latest->hash : null,
                         'old_version' => $isUpdatable ? $clientVersion : false,
                         'icon' => $package->image ?? false,
-                        'is_frozen' => false, // You can add logic for frozen plugins if needed
+                        'is_frozen' => false,
                         'is_updatable' => $isUpdatable,
                     ];
                 }
+            }
+        }
+
+        if (isset($project)) {
+            foreach ($project->plugins as $plugin) {
+                $latestStable = $plugin->versions()
+                    ->where('semantic_version', 'not like', 'dev-%')
+                    ->where('semantic_version', 'not like', '%-dev')
+                    ->orderByDesc('released_at')
+                    ->first();
+                $latest = $latestStable ?: $plugin->versions()
+                    ->orderByDesc('released_at')
+                    ->first();
+
+                if (!isset($latest)) {
+                    continue;
+                }
+                $pluginsOut[$plugin->code] = [
+                    'name' => $plugin->name,
+                    'version' => $latest ? $latest->semantic_version : $clientVersion,
+                    'hash' => $latest ? $latest->hash : null,
+                    'old_version' => false,
+                    'icon' => $plugin->image ?? false,
+                    'is_frozen' => false,
+                    'is_updatable' => true,
+                ];
+            }
+        }
+
+        if (isset($project)) {
+
+            foreach ($project->themes as $plugin) {
+                $latestStable = $plugin->versions()
+                    ->where('semantic_version', 'not like', 'dev-%')
+                    ->where('semantic_version', 'not like', '%-dev')
+                    ->orderByDesc('released_at')
+                    ->first();
+                $latest = $latestStable ?: $plugin->versions()
+                    ->orderByDesc('released_at')
+                    ->first();
+
+                if (!isset($latest)) {
+                    continue;
+                }
+
+                $pluginsOut[$plugin->code] = [
+                    'name' => $plugin->name,
+                    'version' => $latest ? $latest->semantic_version : null,
+                    'hash' => $latest ? $latest->hash : null,
+                    'old_version' => false,
+                    'icon' => $plugin->image ?? false,
+                ];
             }
         }
 
@@ -127,9 +188,9 @@ class CoreUpdateController extends Controller
 
         abort_if(empty($latestVersion->dist_url), 404, 'No distribution URL found for this package.');
         $contentType = 'application/octet-stream';
-        $contentDisposition = 'attachment; filename="' . $package->name . '-' . $latestVersion->semantic_version . '.zip"';
+        $contentDisposition = 'attachment; filename="' . $package->name . '-' . Str::slug($latestVersion->semantic_version) . '.zip"';
 
-        $responseDownload = file_get_contents($latestVersion->getCacheLocation());
+        $responseDownload = Storage::disk('packages')->get($latestVersion->getCacheLocation());
 
         return response($responseDownload, 200, [
             'Content-Type' => $contentType,

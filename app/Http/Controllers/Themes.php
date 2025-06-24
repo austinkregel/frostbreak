@@ -22,11 +22,18 @@ class Themes extends Controller
     public function detail(Request $request)
     {
         $packageName = $request->get('name');
+
         $package = Package::query()
-            ->where('name', $packageName)
+            ->where('code', $packageName)
             ->where('needs_additional_processing', false)
             ->whereJsonContains('keywords', 'theme')
-            ->firstOrFail();
+            ->first();
+
+        if (!$package) {
+            return response()->json([
+                'error' => 'Theme not found',
+            ], 404);
+        }
         return response()->json($package);
     }
 
@@ -34,7 +41,7 @@ class Themes extends Controller
     {
         $packageName = $request->get('query');
         // If using Laravel Scout, otherwise fallback to a simple where
-        $packages = Package::where('name', 'like', "%{$packageName}%")
+        $packages = Package::where('code', 'like', "%{$packageName}%")
             ->whereJsonContains('keywords', 'theme')
             ->whereJsonDoesntContain('keywords', 'october')
             ->limit(10)

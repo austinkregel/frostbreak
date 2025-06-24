@@ -54,7 +54,7 @@ class Version extends Model
     {
         $version = Str::slug($this->semantic_version ?? 'latest');
 
-        $packageDestination = storage_path('packages/' . $this->package->name);
+        $packageDestination = str_replace('.', '/', $this->package->code);
 
         return $packageDestination . '/' . $version . '.zip';
     }

@@ -21,7 +21,7 @@
         <div class="bg-white dark:bg-gray-800 dark:text-white overflow-hidden shadow-xl sm:rounded-lg">
           <div v-if="props.projects.data.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-8">No projects found.</div>
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-            <div v-for="project in props.projects.data" :key="project.id" class="border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-white dark:bg-gray-800 shadow hover:shadow-lg transition flex flex-col justify-between">
+            <div v-for="project in props.projects.data" :key="project.license_id" class="border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-white dark:bg-gray-800 shadow hover:shadow-lg transition flex flex-col justify-between">
               <div class="flex items-center justify-between gap-2 mb-2">
                 <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Project</span>
                 <span class="text-xs bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-300 px-2 py-1 rounded">{{ project.created_at ? new Date(project.created_at).toLocaleDateString() : '' }}</span>
@@ -29,7 +29,7 @@
               <h2 class="font-bold text-xl mb-1 text-gray-900 dark:text-gray-100">{{ project.name }}</h2>
               <p class="text-gray-700 dark:text-gray-300 min-h-[48px]">{{ project.description }}</p>
               <div class="flex justify-end mt-4">
-                <Link :href="'/project/' + project.id" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">View Project</Link>
+                <Link :href="'/project/' + project.license_id" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">View Project</Link>
               </div>
             </div>
           </div>
@@ -80,12 +80,12 @@
           <p class="text-gray-700 dark:text-gray-300">Select a project to add this {{ selectedType }} to:</p>
         </div>
         <div class="grid grid-cols-1 gap-4">
-          <div v-for="project in props.projects.data" :key="project.id" class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800 shadow hover:shadow-lg transition flex items-center justify-between">
+          <div v-for="project in props.projects.data" :key="project.license_id" class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800 shadow hover:shadow-lg transition flex items-center justify-between">
             <div>
               <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ project.name }}</h4>
               <p class="text-gray-500 dark:text-gray-400 text-sm">{{ project.description }}</p>
             </div>
-            <button @click="addToProject(project.id)" class="bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-2 rounded-lg font-semibold shadow">
+            <button @click="addToProject(project.license_id)" class="bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-2 rounded-lg font-semibold shadow">
               Add
             </button>
           </div>
