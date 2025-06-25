@@ -28,9 +28,10 @@ Route::withoutMiddleware([
     Route::post('/theme/details', [Themes::class, 'details'])->name('kregel.root.theme.details');
     Route::post('/theme/popular', [Themes::class, 'popular'])->name('kregel.root.theme.popular');
     Route::post('/theme/search', [Themes::class, 'search'])->name('kregel.root.theme.search');
-    Route::post('/theme/get', [Themes::class, 'theme'])->name('kregel.root.theme.get');
+    Route::post('/theme/get', [Packages::class, 'package'])->name('kregel.root.theme.get');
 
     // Core and Project Endpoints
+    Route::post('/core/get', [CoreUpdateController::class, 'get'])->name('kregel.root.core.get');
     Route::post('/core/update', [CoreUpdateController::class, 'handle'])->name('kregel.root.core.update');
     Route::post('/project/detail', [\App\Http\Controllers\Projects::class, 'detail'])->name('kregel.root.project.detail');
 
@@ -54,13 +55,29 @@ Route::middleware([
 ])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Projects::class, 'dashboard'])->name('dashboard');
     Route::post('/projects', [\App\Http\Controllers\Projects::class, 'store'])->name('projects.store');
-    Route::get('/project/{project}', [\App\Http\Controllers\Projects::class, 'show'])->name('project.show');
-    Route::post('/project/{project}/add-plugin', [\App\Http\Controllers\Projects::class, 'addPlugin'])->name('project.add-plugin');
-    Route::post('/project/{project}/add-theme', [\App\Http\Controllers\Projects::class, 'addTheme'])->name('project.add-theme');
-    Route::post('/project/{project}/remove-plugin', [\App\Http\Controllers\Projects::class, 'removePlugin'])->name('project.remove-plugin');
-    Route::post('/project/{project}/remove-theme', [\App\Http\Controllers\Projects::class, 'removeTheme'])->name('project.remove-theme');
+    Route::get('/project/{project:license_id}', [\App\Http\Controllers\Projects::class, 'show'])->name('project.show');
+    Route::post('/project/{project:license_id}/add-plugin', [\App\Http\Controllers\Projects::class, 'addPlugin'])->name('project.add-plugin');
+    Route::post('/project/{project:license_id}/add-theme', [\App\Http\Controllers\Projects::class, 'addTheme'])->name('project.add-theme');
+    Route::post('/project/{project:license_id}/remove-plugin', [\App\Http\Controllers\Projects::class, 'removePlugin'])->name('project.remove-plugin');
+    Route::post('/project/{project:license_id}/remove-theme', [\App\Http\Controllers\Projects::class, 'removeTheme'])->name('project.remove-theme');
     Route::get('/projects', [\App\Http\Controllers\Projects::class, 'list'])->name('projects.list');
-    Route::put('/projects/{project}', [\App\Http\Controllers\Projects::class, 'update'])->name('projects.update');
-    Route::delete('/projects/{project}', [\App\Http\Controllers\Projects::class, 'destroy'])->name('projects.destroy');
+    Route::put('/projects/{project:license_id}', [\App\Http\Controllers\Projects::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{project:license_id}', [\App\Http\Controllers\Projects::class, 'destroy'])->name('projects.destroy');
     Route::get('/search', [\App\Http\Controllers\SearchController::class, 'index'])->name('search.index');
 });
+// We need to define our own 404 route so we can identify routes that aren't making their way to our app.
+Route::fallback(function () {
+    info('404 Not Found: ' . request()->getPathInfo() . ' - ' . request()->getMethod(), [
+        'ip' => request()->ip(),
+        'user_agent' => request()->header('User-Agent'),
+        'path' => request()->getPathInfo(),
+        'method' => request()->getMethod(),
+    ]);
+    return response()->json([
+        'message' => 'Not Found',
+        'status' => 404,
+        'path' => request()->getPathInfo(),
+        'method' => request()->getMethod(),
+        'timestamp' => now()->toIso8601String(),
+    ], 404);
+})->name('not-found');

@@ -50,4 +50,3 @@ class ThemeDetailsTest extends TestCase
             ->assertJsonFragment(['name' => 'theme-two']);
     }
 }
-

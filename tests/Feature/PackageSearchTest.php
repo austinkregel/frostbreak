@@ -19,20 +19,19 @@ class PackageSearchTest extends TestCase
             ->assertExactJson([]);
     }
 
-
     public function test_it_returns_matching_packages_for_query()
     {
         Package::factory()->create([
-            'name' => 'AnotherPlugin',
+            'code' => 'AnotherPlugin',
             'keywords' => ['plugin'],
         ]);
 
         Package::factory()->create([
-            'name' => 'SuperPlugin',
+            'code' => 'SuperPlugin',
             'keywords' => ['plugin'],
         ]);
         Package::factory()->create([
-            'name' => 'ThemePackage',
+            'code' => 'ThemePackage',
             'keywords' => ['theme'],
         ]);
 
@@ -40,7 +39,7 @@ class PackageSearchTest extends TestCase
             'query' => 'Super',
         ]);
         $response->assertStatus(200)
-            ->assertJsonFragment(['name' => 'SuperPlugin']);
+            ->assertJsonFragment(['code' => 'SuperPlugin']);
         $this->assertCount(1, $response->json());
     }
 
@@ -48,7 +47,7 @@ class PackageSearchTest extends TestCase
     {
         for ($i = 1; $i <= 15; $i++) {
             Package::factory()->create([
-                'name' => "Plugin{$i}",
+                'code' => "Plugin{$i}",
                 'keywords' => ['plugin'],
             ]);
         }
@@ -59,4 +58,3 @@ class PackageSearchTest extends TestCase
         $this->assertCount(10, $response->json());
     }
 }
-

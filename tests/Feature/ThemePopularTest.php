@@ -38,4 +38,3 @@ class ThemePopularTest extends TestCase
         $this->assertNotContains('should-be-excluded', array_column($response->json(), 'name'));
     }
 }
-

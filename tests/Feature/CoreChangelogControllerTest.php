@@ -41,4 +41,3 @@ class CoreChangelogControllerTest extends TestCase
             ]);
     }
 }
-

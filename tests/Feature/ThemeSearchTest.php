@@ -22,15 +22,15 @@ class ThemeSearchTest extends TestCase
     public function test_it_returns_matching_themes_for_query()
     {
         Package::factory()->create([
-            'name' => 'SuperTheme',
+            'code' => 'AnotherTheme',
             'keywords' => ['theme'],
         ]);
         Package::factory()->create([
-            'name' => 'AnotherTheme',
+            'code' => 'SuperTheme',
             'keywords' => ['theme'],
         ]);
         Package::factory()->create([
-            'name' => 'PluginPackage',
+            'code' => 'PluginPackage',
             'keywords' => ['plugin'],
         ]);
 
@@ -38,7 +38,7 @@ class ThemeSearchTest extends TestCase
             'query' => 'Super',
         ]);
         $response->assertStatus(200)
-            ->assertJsonFragment(['name' => 'SuperTheme']);
+            ->assertJsonFragment(['code' => 'SuperTheme']);
         $this->assertCount(1, $response->json());
     }
 
@@ -46,7 +46,7 @@ class ThemeSearchTest extends TestCase
     {
         for ($i = 1; $i <= 15; $i++) {
             Package::factory()->create([
-                'name' => "Theme{$i}",
+                'code' => "Theme{$i}",
                 'keywords' => ['theme'],
             ]);
         }
@@ -57,4 +57,3 @@ class ThemeSearchTest extends TestCase
         $this->assertLessThanOrEqual(10, count($response->json()));
     }
 }
-

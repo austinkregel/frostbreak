@@ -21,7 +21,7 @@ class ThemeDetailTest extends TestCase
     public function test_it_returns_theme_details_on_success()
     {
         $theme = Package::factory()->create([
-            'name' => 'test-theme',
+            'code' => 'test-theme',
             'keywords' => ['theme'],
             'needs_additional_processing' => false,
         ]);
@@ -30,7 +30,7 @@ class ThemeDetailTest extends TestCase
         ]);
         $response->assertStatus(200)
             ->assertJsonFragment([
-                'name' => 'test-theme',
+                'code' => 'test-theme',
             ]);
     }
 }

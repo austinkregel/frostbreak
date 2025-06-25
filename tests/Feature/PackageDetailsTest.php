@@ -52,4 +52,3 @@ class PackageDetailsTest extends TestCase
             ->assertJsonFragment(['code' => 'My.PluginTwo']);
     }
 }
-

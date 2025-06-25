@@ -3,11 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Package;
+use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Packages extends Controller
 {
+    public function __construct(protected FilesystemManager $manager, protected mixed $filesystem = null)
+    {
+        $this->filesystem = $manager->disk('packages');
+    }
+
     public function details(Request $request)
     {
         $packageNames = $request->get('names', []);
@@ -27,16 +35,22 @@ class Packages extends Controller
             ->whereJsonContains('keywords', 'plugin')
             ->whereJsonDoesntContain('keywords', 'october')
             ->where('code', $packageName)
-            ->firstOrFail();
+            ->first();
+
+        if (!$package) {
+            return response()->json([
+                'error' => 'Package not found',
+            ], 404);
+        }
+
         return response()->json($package);
     }
 
     public function search(Request $request)
     {
         $packageName = $request->get('query');
-        $packages = Package::where('name', 'like', "%{$packageName}%")
+        $packages = Package::where('code', 'like', "%{$packageName}%")
             ->whereJsonContains('keywords', 'plugin')
-            ->whereJsonDoesntContain('keywords', 'october')
             ->limit(10)
             ->get();
 
@@ -59,23 +73,58 @@ class Packages extends Controller
     {
         $packageName = $request->get('name');
         $package = Package::query()
-            ->whereJsonContains('keywords', 'plugin')
-            ->whereJsonDoesntContain('keywords', 'october')
             ->where('needs_additional_processing', false)
             ->where('code', $packageName)
-            ->firstOrFail();
-        $latestVersion = $package->versions()->orderByDesc('released_at')->first();
+            ->first();
 
-        abort_if(empty($latestVersion->dist_url), 404, 'No distribution URL found for this package.');
-        $response = Http::head($latestVersion->dist_url);
-        if (!$response->successful()) {
-            return response()->json(['error' => 'Failed to fetch video headers'], 500);
+        if (!$package) {
+            return response()->json([
+                'error' => 'Package not found',
+            ], 404);
         }
-        // Get content type and content length
-        $contentType = $response->header('Content-Type', 'application/octet-stream');
-        $contentDisposition = $response->header('content-disposition');
 
-        $responseDownload = Http::get($latestVersion->dist_url);
+        $latestVersion = $package->versions()
+            ->where('semantic_version', 'not like', '%-dev')
+            ->where('semantic_version', 'not like', 'dev-%')
+            ->orderByDesc('released_at')
+            ->first();
+
+
+        if (empty($latestVersion)) {
+            $latestVersion = $package->versions()
+                ->orderByDesc('released_at')
+                ->first();
+        }
+
+        if (empty($latestVersion)) {
+            return response()->json([
+                'error' => 'No stable versions available for this package',
+            ], 404);
+        }
+
+        $version = Str::slug($latestVersion->semantic_version ?? 'latest');
+
+        $packageDestination = str_replace('.', '/', $package->name);
+
+        $location = $packageDestination . '/' . $version . '.zip';
+
+
+        if (!Storage::disk('packages')->exists($location)) {
+            return response()->json([
+                'error' => 'Package version not found',
+                'exists' => Storage::disk('packages')->exists($location),
+                'path' => $location,
+            ], 410);
+        }
+
+        $contentType = 'application/octet-stream';
+        $contentDisposition = 'attachment; filename="' . $package->name . '-' . $version . '.zip"';
+
+        $responseDownload = Storage::disk('packages')->get($location);
+
+        if ($latestVersion->hash !== md5($responseDownload)) {
+            abort(500, 'The downloaded package does not match the expected hash.');
+        }
 
         return response($responseDownload, 200, [
             'Content-Type' => $contentType,
