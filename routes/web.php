@@ -44,7 +44,7 @@ Route::get('/', function () {
     return inertia('Landing', [
         'title' => 'Frostbreak Marketplace',
         'subtitle' => 'A public marketplace for WinterCMS plugins and themes',
-        'notice' => '⚠️ This project is under heavy development. Not all features will work, but some will! Please report any issues you find.',
+        'notice' => '⚠️ This project is under active development. Not all features will work perfectly, but most will! Please report any issues you find on github.',
     ]);
 })->name('home');
 
