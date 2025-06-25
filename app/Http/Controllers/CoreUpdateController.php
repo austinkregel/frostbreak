@@ -111,7 +111,6 @@ class CoreUpdateController extends Controller
         }
 
         if (isset($project)) {
-
             foreach ($project->themes as $plugin) {
                 $latestStable = $plugin->versions()
                     ->where('semantic_version', 'not like', 'dev-%')
@@ -125,6 +124,12 @@ class CoreUpdateController extends Controller
                 if (!isset($latest)) {
                     continue;
                 }
+
+                if (isset($actualPlugins[$plugin->name]) && version_compare($actualPlugins[$plugin->name], $latest?->semantic_version ?? '0.0.0', '>=')) {
+                    // Plugin is already listed, skip it
+                    continue;
+                }
+
 
                 $pluginsOut[$plugin->code] = [
                     'name' => $plugin->name,

@@ -29,7 +29,9 @@ class ProjectsControllerTest extends TestCase
         $response = $this->post(route('projects.store'), [
             'name' => 'Test Project',
         ]);
-        $response->assertRedirect(route('project.show', ['project' => 1]));
+
+        $project = Project::where('name', 'Test Project')->first();
+        $response->assertRedirect(route('project.show', ['project' => $project->license_id]));
         $this->assertDatabaseHas('marketplace_projects', [
             'name' => 'Test Project',
             'owner_id' => $user->id,
@@ -47,7 +49,7 @@ class ProjectsControllerTest extends TestCase
         $response = $this->post(route('project.add-plugin', $project), [
             'id' => $plugin->id,
         ]);
-        $response->assertRedirect(route('project.show', ['project' => $project->id]));
+        $response->assertRedirect(route('project.show', ['project' => $project->license_id]));
         $project->refresh();
         $this->assertTrue($project->plugins()->where('marketplace_packages.id', $plugin->id)->exists());
     }

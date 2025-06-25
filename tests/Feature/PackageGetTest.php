@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -65,12 +66,16 @@ class PackageGetTest extends TestCase
         ]);
 
         // Mock the Filesystem get method
-        $mock = \Mockery::mock(\Illuminate\Filesystem\Filesystem::class);
+        $mock = \Mockery::mock(FilesystemManager::class);
+
+        $mock->shouldReceive('get')
         $mock->shouldReceive('get')
             ->with($version->getCacheLocation())
             ->andReturn($fileContent);
+
         $this->app->instance('filesystem', $mock);
-        $this->app->instance(\Illuminate\Filesystem\Filesystem::class, $mock);
+
+        $this->app->instance(FilesystemManager::class, $mock);
 
         $response = $this->postJson(route('kregel.root.plugin.get'), [
             'name' => 'test-plugin',

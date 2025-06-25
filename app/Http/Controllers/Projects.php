@@ -53,20 +53,24 @@ class Projects extends Controller
 
         $query = Package::search($request->input($query));
 
-        $query->whereNotIn('id', $project->plugins()->pluck('marketplace_packages.id')->concat($project->themes()->pluck('marketplace_packages.id')));
+        $query->whereNotIn('id', $project->plugins()->pluck('marketplace_packages.id')->concat($project->themes()->pluck('marketplace_packages.id')->toArray()));
 
-        return $query->paginate(
-            $request->input('limit', 12),
-            'page',
-        );
+        return $query->paginate($request->input('limit', 12));
     }
-
 
     public function detail(DetailProjectRequest $request)
     {
-        $packageIds = $request->get('id', null);
+        $packageId = $request->get('id', null);
 
-        $project = $this->projects->findByIdWithRelations($packageIds, ['plugins.versions', 'themes.versions']);
+        if (is_numeric($packageId)) {
+            return response('Invalid Project License Key; please use the UUID in the URL, not the project id', 400);
+        }
+
+        $project = $this->projects->findByIdWithRelations($packageId, ['plugins.versions', 'themes.versions']);
+
+        if (empty($project)) {
+            return response('Invalid Project License Key; project does not exist', 400);
+        }
 
         $project->setRelation('plugins', $project->plugins->map->name);
 

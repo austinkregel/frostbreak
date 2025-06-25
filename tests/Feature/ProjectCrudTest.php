@@ -41,12 +41,12 @@ class ProjectCrudTest extends TestCase
         $user = User::factory()->create();
         $project = Project::factory()->for($user, 'owner')->create();
         $response = $this->actingAs($user)
-            ->put("/projects/{$project->id}", [
+            ->put("/projects/{$project->license_id}", [
                 'name' => 'Updated Name',
             ]);
         $response->assertRedirect();
         $this->assertDatabaseHas('marketplace_projects', [
-            'id' => $project->id,
+            'license_id' => $project->license_id,
             'name' => 'Updated Name',
         ]);
     }
@@ -60,11 +60,10 @@ class ProjectCrudTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->delete("/projects/{$project->id}");
+            ->delete("/projects/{$project->license_id}");
         $response->assertRedirect();
         $this->assertDatabaseMissing('marketplace_projects', [
-            'id' => $project->id,
+            'license_id' => $project->license_id,
         ]);
     }
 }
-

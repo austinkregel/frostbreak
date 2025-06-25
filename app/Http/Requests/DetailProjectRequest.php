@@ -22,9 +22,7 @@ class DetailProjectRequest extends FormRequest
 
     public function rules()
     {
-        return [
-            'id' => 'required|exists:marketplace_projects,id',
-        ];
+        return [];
     }
 }
 

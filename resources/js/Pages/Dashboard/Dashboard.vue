@@ -14,7 +14,7 @@
             <ul v-if="recentProjects.length" class="space-y-2">
               <li v-for="project in recentProjects" :key="project.id" class="flex justify-between items-center dark:text-white">
                 <span class="truncate">{{ project.name }}</span>
-                <Link :href="`/project/${project.id}`" class="text-blue-600 dark:text-blue-400 underline">View</Link>
+                <Link :href="`/project/${project.license_id}`" class="text-blue-600 dark:text-blue-400 underline">View</Link>
               </li>
             </ul>
             <div v-else class="text-gray-500 dark:text-gray-400">No recent projects.</div>

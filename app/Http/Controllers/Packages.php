@@ -51,7 +51,6 @@ class Packages extends Controller
         $packageName = $request->get('query');
         $packages = Package::where('code', 'like', "%{$packageName}%")
             ->whereJsonContains('keywords', 'plugin')
-            ->whereJsonDoesntContain('keywords', 'october')
             ->limit(10)
             ->get();
 
