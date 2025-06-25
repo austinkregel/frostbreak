@@ -76,7 +76,7 @@
               <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ project.name }}</h4>
               <p class="text-gray-500 dark:text-gray-400 text-sm">{{ project.description }}</p>
             </div>
-            <button @click="addToProject(project.id)" class="bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-2 rounded-lg font-semibold shadow">
+            <button @click="addToProject(project.license_id)" class="bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-2 rounded-lg font-semibold shadow">
               Add
             </button>
           </div>

@@ -10,7 +10,7 @@
         <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-1">{{ project.name }}</h1>
-            <div class="text-gray-500 dark:text-gray-400 text-sm">Project ID: <span class="font-mono">{{ project.id }}</span></div>
+            <div class="text-gray-500 dark:text-gray-400 text-sm">License ID: <span class="font-mono">{{ project.license_id }}</span></div>
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -36,12 +36,12 @@
               <!-- Theme Search -->
               <div class="mb-2">
                 <input v-model="themeSearch" type="text" placeholder="Search for themes to add..." class="w-full px-3 py-2 rounded-t border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring focus:border-blue-400" />
-                <div v-if="themeSearchResults.length" class="mt-2 bg-white dark:bg-gray-800 border-t border-l border-r border-gray-200 dark:border-gray-700 rounded-b shadow">
+                <div v-if="themeSearchResults.data" class="mt-2 bg-white dark:bg-gray-800 border-t border-l border-r border-gray-200 dark:border-gray-700 rounded-b shadow">
                   <ul>
-                    <li v-for="theme in themeSearchResults" :key="theme.id" class="flex items-center justify-between px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">
-                      <div>
-                        <span class="font-medium">{{ theme.title || theme.name }}</span>
-                        <span class="text-xs text-gray-500 ml-2">{{ theme.description }}</span>
+                    <li v-for="theme in themeSearchResults?.data" :key="theme.id" class="group flex items-center justify-between px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <div class="flex flex-col">
+                          <span class="font-medium dark:text-white text-xs">{{ theme.name }}</span>
+                          <span class="text-xs text-gray-500 dark:text-gray-400 dark:group-hover:text-gray-300">{{ theme.description }}</span>
                       </div>
                       <button @click="addToProject(theme, 'theme')" class="ml-2 px-2 py-1 text-xs rounded bg-blue-500 text-white hover:bg-blue-600">Add</button>
                     </li>
@@ -79,12 +79,12 @@
               <!-- Plugin Search -->
               <div class="mb-2">
                 <input v-model="pluginSearch" type="text" placeholder="Search for plugins to add..." class="w-full px-3 py-2 rounded-t border-l border-r border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring focus:border-blue-400" />
-                <div v-if="pluginSearchResults?.total" class="mt-2 bg-white dark:bg-gray-800 border-l border-r border-gray-200 dark:border-gray-700 rounded shadow">
+                <div v-if="pluginSearch && pluginSearchResults?.total" class="mt-2 bg-white dark:bg-gray-800 border-l border-r border-gray-200 dark:border-gray-700 rounded shadow">
                   <ul class="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
                     <li v-for="plugin in (pluginSearchResults?.data ?? [])" :key="plugin.id" class="px-4 py-2.5 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700">
                       <div class="flex flex-col">
                         <span class="font-medium dark:text-white text-xs">{{ plugin.name }}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-300">{{ plugin.description }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 dark:group-hover:text-gray-300">{{ plugin.description }}</span>
                       </div>
                       <button @click="addToProject(plugin, 'plugin')" class="ml-2 px-2 py-1 text-xs rounded bg-blue-500 text-white hover:bg-blue-600">Add</button>
                     </li>
@@ -113,11 +113,10 @@ import { ref, watch, computed } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
 import { TrashIcon } from '@heroicons/vue/24/outline';
 
-const { project, themeQuery, pluginQuery } = defineProps({
+const { project, themeQuery, pluginQuery, pluginSearchResults, themeSearchResults } = defineProps({
   project: Object,
   pluginQuery: String,
   themeQuery: String,
-
   pluginSearchResults: Object,
   themeSearchResults: Object,
 });
@@ -152,7 +151,7 @@ watch(pluginSearch, (val) => {
 });
 
 async function addToProject(item, type) {
-  const url = `/project/${project.id}/add-${type}`;
+  const url = `/project/${project.license_id}/add-${type}`;
   try {
     await axios.post(url, { id: item.id });
     router.reload({ only: ['project', 'pluginSearchResults', 'themeSearchResults'] });
@@ -163,7 +162,7 @@ async function addToProject(item, type) {
 }
 
 async function removeFromProject(item, type) {
-  const url = `/project/${project.id}/remove-${type}`;
+  const url = `/project/${project.license_id}/remove-${type}`;
   try {
     await axios.post(url, { id: item.id });
     router.reload({
