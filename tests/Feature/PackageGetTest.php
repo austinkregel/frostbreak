@@ -36,8 +36,8 @@ class PackageGetTest extends TestCase
         $response = $this->postJson(route('kregel.root.plugin.get'), [
             'name' => 'test-plugin',
         ]);
-        $response->assertStatus(404)
-            ->assertSee('No distribution URL found for this package.');
+        $response->assertStatus(410)
+            ->assertSee('Package version not found');
     }
 
 
@@ -67,11 +67,19 @@ class PackageGetTest extends TestCase
 
         // Mock the Filesystem get method
         $mock = \Mockery::mock(FilesystemManager::class);
-
-        $mock->shouldReceive('get')
-        $mock->shouldReceive('get')
+        $filesystemMock = \Mockery::mock(Filesystem::class);
+        $filesystemMock->shouldReceive('get')
             ->with($version->getCacheLocation())
             ->andReturn($fileContent);
+
+        $filesystemMock->shouldReceive('exists')
+            ->once()
+            ->with($version->getCacheLocation())
+            ->andReturnTrue();
+
+        $mock->shouldReceive('disk')
+            ->with('packages')
+            ->andReturn($filesystemMock);
 
         $this->app->instance('filesystem', $mock);
 
@@ -83,6 +91,6 @@ class PackageGetTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/octet-stream');
-        $response->assertHeader('Content-Disposition', 'attachment; filename="test-plugin-1.0.0.zip"');
+        $response->assertHeader('Content-Disposition', 'attachment; filename="test-plugin-100.zip"');
     }
 }
