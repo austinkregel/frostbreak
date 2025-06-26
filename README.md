@@ -49,6 +49,26 @@ This will set up the application's database, and queue querying Packagist for al
 
 This will take a while to finish downloading all the versions, so be patient (30+ minutes with several queue workers).
 
+When you're ready to access the app visit [localhost](http://localhost:8000) in your browser. There is no default user, so you'll need to register a new account.
+
+### Configuring WinterCMS Installation
+
+To link a WinterCMS installation to the marketplace, you need to add the marketplace URL to the `config/cms.php` file of your WinterCMS installation.
+
+```php
+    'updateServer' => env('WINTER_MARKETPLACE_URL', 'http://marketplace.test/place'),
+```
+
+In `http://DOMAIN/place`, replace `DOMAIN` with the domain or IP address where your marketplace is hosted `/place` is the endpoint that WinterCMS will use to communicate with the marketplace.
+
+To restore the original WinterCMS update server, comment out the updateServer line or replace it with:
+
+```php
+    'updateServer' => env('WINTER_MARKETPLACE_URL', 'https://api.wintercms.com/marketplace'),
+```
+
+By default, WinterCMS will use `https://api.wintercms.com/marketplace` and basically act as a proxy to the OctoberCMS Marketplace. 
+
 ## Future plans
 - [ ] A way to claim ownership of a project or published package to add additional details
 - [ ] A way to for creators to upload plugins and themes
