@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Contracts\Repositories\PackageRepositoryContract;
 use App\Jobs\RepackageVersionInZipJob;
 use App\Models\Package;
 use App\Services\PackagistClient;
 use Carbon\Carbon;
-use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
-class PackageRepository
+class PackageRepository implements PackageRepositoryContract
 {
     public function __construct(
         protected FilesystemManager $manager,
@@ -197,9 +197,11 @@ class PackageRepository
         if (str_ends_with($latestVersion['name'], 'plugin')) {
             return 'plugin';
         }
-
         if (str_ends_with($latestVersion['name'], 'theme')) {
             return 'theme';
+        }
+        if (str_ends_with($latestVersion['name'], 'module')) {
+            return 'module';
         }
         if (str_contains($latestVersion['name'], 'storm')) {
             // Storm plugins technically do extend winterCMS
@@ -222,8 +224,12 @@ class PackageRepository
 
         $composerType = $latestVersion['type'] ?? '';
 
-        if (str_ends_with($composerType, 'plugin') || str_ends_with($composerType, 'module')) {
+        if (str_ends_with($composerType, 'plugin')) {
             return 'plugin';
+        }
+
+        if (str_ends_with($composerType, 'module')) {
+            return 'module';
         }
 
         if (str_ends_with($composerType, 'theme')) {
@@ -231,5 +237,66 @@ class PackageRepository
         }
 
         dd($latestVersion);
+    }
+
+    public function findByCode(string $code): ?Package
+    {
+        return Package::firstWhere('code', $code);
+    }
+
+    public function findThemeByCode(string $code): ?Package
+    {
+        return Package::query()
+            ->whereJsonContains('keywords', 'theme')
+            ->firstWhere('code', $code);
+    }
+    public function findPluginByCode(string $code): ?Package
+    {
+        return Package::query()
+            ->whereJsonContains('keywords', 'plugin')
+            ->firstWhere('code', $code);
+    }
+
+    public function findModuleByCode(string $code): ?Package
+    {
+        return Package::query()
+            ->whereJsonContains('keywords', 'module')
+            ->firstWhere('code', $code);
+    }
+
+    public function findByComposerPackage(string $package): ?Package
+    {
+        return Package::firstWhere('name', $package);
+    }
+    public function searchByCode(string $code, int $limit = 15, int $page = 1): LengthAwarePaginator
+    {
+        return Package::query()
+            ->where('code', 'like', "%{$code}%")
+            ->paginate(perPage: $limit, page: $page);
+    }
+
+    public function searchByPackageName(string $composerName, int $limit = 15, int $page = 1): LengthAwarePaginator
+    {
+        return Package::query()
+            ->where('name', 'like', "%{$composerName}%")
+            ->paginate(perPage: $limit, page: $page);
+    }
+
+    public function findSomePopular(int $limit = 15): LengthAwarePaginator
+    {
+        return Package::orderByDesc('downloads')
+            ->where('needs_additional_processing', false)
+            ->whereJsonContains('keywords', 'plugin')
+            ->orderByDesc('favers')
+            ->paginate($limit, page: 1);
+    }
+
+    public function findAllPackageDetails(array $packageNames): Collection
+    {
+        return Package::query()
+            ->whereJsonContains('keywords', 'plugin')
+            ->whereIn('code', $packageNames)
+            ->where('needs_additional_processing', false)
+            ->get();
     }
 }

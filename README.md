@@ -8,18 +8,53 @@ Welcome to the source of [frostbreak.market](https://frostbreak.market)! This ap
 - **Plugin & Theme Management:** Search, install, and update plugins and themes directly from the marketplace interface.
 - **Core Updates:** Experimental support for updating the core WinterCMS version (currently under investigation; use with caution).
 
-## Current Status
-- [x] Project creation
-- [x] Project linking themes and plugins
-- [x] Project linking to local WinterCMS installations
-- [x] Plugin/theme search
-- [x] Plugin/theme installation
-- [x] Plugin/theme updates
-- [ ] Core updates are technically possible, but not fully tested.
+## Features
+- User registration and authentication
+- Project creation and management
+- Linking projects to WinterCMS installations
+- Searching, installing, and updating plugins and themes
+- Experimental support for core WinterCMS updates
+- Repackaging plugins and themes
+- Easy configuration and setup!
+- Self-hostable
+
+
+## Setup Instructions
+
+<!-- 
+Will be writing these later once I finalize a docker container to publish. for an almost "prod ready" version
+-->
+
+
+## Development Setup Instructions
+
+‼️ Keep in mind that this will download all available packages from Packagist to build the index. 
+This could take a while and use a lot of disk space. At present the compressed packages take up about 2.1GB. ‼️
+
+It as it completes repackaging it will delete the original code when zipped, so the actual _required_ space is likely about 5GB+. Do not run this on a system with limited disk space, or on a metered connection (unless you're okay with the data usage).
+
+Either download or clone the repository then:
+
+```bash
+composer install
+npm install
+npm run build # Could also be dev if you want to run with hot reloading (Enter the following commands in a new shell)
+vendor/bin/sail up -d
+vendor/bin/sail artisan migrate
+vendor/bin/sail artisan packages:build-index-from-packagist
+vendor/bin/sail artisan horizon
+```
+
+This will set up the application's database, and queue querying Packagist for all available packages, then start the horizon queue worker to process the repackaging of plugins and themes.
+
+This will take a while to finish downloading all the versions, so be patient (30+ minutes with several queue workers).
+
+## Future plans
+- [ ] A way to claim ownership of a project or published package to add additional details
+- [ ] A way to for creators to upload plugins and themes
+- [ ] A way to for creators to manage their plugins and themes
+- [ ] Investigate a monetization strategy for creators & the marketplace (ads, sponsorships, donations, paid plugins/themes, etc.)
 - [ ] Authentication to private repositories for package indexing
-- [ ] Marketplace API for third-party integrations
-- [ ] A way to claim ownership of a project or published package
-- [ ] A way to for creators to sell plugins and themes 
 
 ## Contributing
 

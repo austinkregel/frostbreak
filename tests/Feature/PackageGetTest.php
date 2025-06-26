@@ -14,6 +14,18 @@ class PackageGetTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected $originalFileManager;
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->originalFileManager = $this->app->make(FilesystemManager::class);
+    }
+    protected function tearDown(): void
+    {
+        $this->app->instance(FilesystemManager::class, $this->originalFileManager);
+        parent::tearDown();
+    }
+
     public function test_it_returns_404_if_package_not_found()
     {
         $response = $this->postJson(route('kregel.root.plugin.get'), [
@@ -44,7 +56,7 @@ class PackageGetTest extends TestCase
     public function test_it_returns_file_on_success()
     {
         $package = Package::factory()->create([
-            'name' => 'test-plugin',
+            'name' => 'test.plugin',
             'code' => 'test-plugin',
             'keywords' => ['plugin'],
             'needs_additional_processing' => false,
@@ -80,17 +92,20 @@ class PackageGetTest extends TestCase
         $mock->shouldReceive('disk')
             ->with('packages')
             ->andReturn($filesystemMock);
-
-        $this->app->instance('filesystem', $mock);
+        $mock->shouldReceive('disk')
+            ->with('downloads')
+            ->andReturn($filesystemMock);
+        $mock->shouldReceive('disk')
+            ->with('archive')
+            ->andReturn($filesystemMock);
 
         $this->app->instance(FilesystemManager::class, $mock);
-
         $response = $this->postJson(route('kregel.root.plugin.get'), [
             'name' => 'test-plugin',
         ]);
-
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/octet-stream');
-        $response->assertHeader('Content-Disposition', 'attachment; filename="test-plugin-100.zip"');
+        $response->assertHeader('Content-Disposition', 'attachment; filename="test.plugin-100.zip"');
+        $this->assertEquals($fileContent, $response->getContent());
     }
 }

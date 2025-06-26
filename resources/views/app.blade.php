@@ -17,5 +17,6 @@
     </head>
     <body class="font-sans antialiased ">
         @inertia
+        <script async defer src="https://umami.kregel.host/script.js" data-website-id="3595fbaf-4b14-4dcd-be30-a16d5afe6870"></script>
     </body>
 </html>

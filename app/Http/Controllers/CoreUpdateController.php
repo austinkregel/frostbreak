@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Package;
+use App\Contracts\Repositories\PackageRepositoryContract;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,9 +15,8 @@ class CoreUpdateController extends Controller
 {
     public const WINTER_STORM_PACKAGE_CODE = 'wintercms/winter';
 
-    public function handle(Request $request)
+    public function handle(Request $request, PackageRepositoryContract $packageRepository)
     {
-        // Core hash is used when we don't have a specific build number
         $coreHash = $request->get('core');
         $plugins = $request->get('plugins', []);
         $themes = $request->get('themes', []);
@@ -29,7 +28,8 @@ class CoreUpdateController extends Controller
         $projectId = $request->has('project') ? $request->get('project') : null;
         $project = $request->has('project') ? Project::firstWhere('license_id', $projectId):  null;
         // --- CORE (wintercms/winter) ---
-        $corePackage = \App\Models\Package::where('name', static::WINTER_STORM_PACKAGE_CODE)->first();
+        $corePackage = $packageRepository->findByComposerPackage(static::WINTER_STORM_PACKAGE_CODE);
+
         $coreVersions = $corePackage ? $corePackage->versions()
             ->where('semantic_version', 'not like', 'dev-%')
             ->where('semantic_version', 'not like', '%-dev')
@@ -53,9 +53,7 @@ class CoreUpdateController extends Controller
         $pluginsOut = [];
         if (is_array($actualPlugins)) {
             foreach ($actualPlugins as $code => $clientVersion) {
-                $package = \App\Models\Package::where('code', $code)
-                    ->whereJsonContains('keywords', 'plugin')
-                    ->first();
+                $package = $packageRepository->findPluginByCode($code);
                 info('Found package for plugin: ' . $code . ' - ' . ($package ? $package->name : 'not found'));
 
                 if ($package) {
@@ -145,13 +143,11 @@ class CoreUpdateController extends Controller
         $themesOut = [];
         if (is_array($actualThemes)) {
             foreach ($actualThemes as $code => $clientVersion) {
-                $package = \App\Models\Package::where('code', $code)
-                    ->whereJsonContains('keywords', 'theme')
-                    ->first();
+                $package = $packageRepository->findThemeByCode($code);
                 info('Found package for theme: ' . $code . ' - ' . ($package ? $package->name : 'not found'));
                 if ($package) {
                     $latest = $package->versions()->orderByDesc('released_at')->first();
-                    $isUpdatable = $latest && ($force || version_compare($latest->semantic_version, $clientVersion, '>'));
+                    $isUpdatable = $latest && version_compare($latest->semantic_version, $clientVersion, 'gt');
                     $themesOut[$code] = [
                         'name' => $package->name,
                         'version' => $latest ? $latest->semantic_version : $clientVersion,
@@ -178,12 +174,9 @@ class CoreUpdateController extends Controller
         return response()->json($response);
     }
 
-    public function get(Request $request)
+    public function get(Request $request, PackageRepositoryContract $packageRepository)
     {
-        $packageName = $request->get('name');
-        $package = Package::query()
-            ->where('name', 'wintercms/winter')
-            ->firstOrFail();
+        $package = $packageRepository->findByComposerPackage(static::WINTER_STORM_PACKAGE_CODE);
 
         $latestVersion = $package->versions()
             ->where('semantic_version', 'not like', 'dev-%')

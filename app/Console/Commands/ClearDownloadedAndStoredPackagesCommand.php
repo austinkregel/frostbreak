@@ -52,6 +52,7 @@ class ClearDownloadedAndStoredPackagesCommand extends Command
             $this->error('Failed to recreate the packages directory.');
             return;
         }
+
         $this->info('Cleared the packages directory.');
 
         Version::truncate()->get();
@@ -59,6 +60,5 @@ class ClearDownloadedAndStoredPackagesCommand extends Command
         Package::truncate()->get();
         $this->info('Cleared all packages from the database.');
         $this->info('All downloaded and stored packages have been cleared successfully.');
-
     }
 }

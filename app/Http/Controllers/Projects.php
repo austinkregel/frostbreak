@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Repositories\ProjectRepositoryContract;
+use App\Http\Requests\AddPluginRequest;
+use App\Http\Requests\AddThemeRequest;
+use App\Http\Requests\DeleteProjectRequest;
+use App\Http\Requests\DetailProjectRequest;
+use App\Http\Requests\RemovePluginRequest;
+use App\Http\Requests\RemoveThemeRequest;
+use App\Http\Requests\ShowProjectRequest;
+use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Package;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Ramsey\Uuid\Nonstandard\Uuid;
-use App\Http\Requests\UpdateProjectRequest;
-use App\Http\Requests\DeleteProjectRequest;
-use App\Http\Requests\AddPluginRequest;
-use App\Http\Requests\AddThemeRequest;
-use App\Http\Requests\RemovePluginRequest;
-use App\Http\Requests\RemoveThemeRequest;
-use App\Http\Requests\ShowProjectRequest;
-use App\Http\Requests\DetailProjectRequest;
-use App\Http\Requests\StoreProjectRequest;
-use Illuminate\Pagination\LengthAwarePaginator;
-use App\Repositories\ProjectRepositoryContract;
 
 class Projects extends Controller
 {

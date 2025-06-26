@@ -2,40 +2,26 @@
 
 namespace App\Console\Commands;
 
+use App\Contracts\Repositories\PackageRepositoryContract;
+use App\Contracts\Services\PackagistServiceContract;
 use App\Jobs\RepackageVersionInZipJob;
 use App\Models\Package;
-use App\Repositories\PackageRepository;
-use App\Services\PackagistClient;
-use App\Services\PackagistService;
 use Illuminate\Console\Command;
 
 class ImportPackageByComposerName extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'packages:import-package {composerName : The composer name of the package to import (e.g., vendor/package)}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
+    protected $description = 'Import a package by its composer name and process its versions.';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(PackageRepositoryContract $packageRepository, PackagistServiceContract $packageService): void
     {
         $package = Package::query()->with('versions')->firstWhere('name', $this->argument('composerName'));
 
         if (empty($package)) {
-            $matches = (new PackagistService(new PackagistClient()))->search($this->argument('composerName', ''));
+            $matches = $packageService->search($this->argument('composerName', ''));
 
-            app(PackageRepository::class)->syncPackages($matches, true);
+            $packageRepository->syncPackages($matches, true);
         }
 
         $package = Package::query()->with('versions')->firstWhere('name', $this->argument('composerName'));
@@ -53,9 +39,7 @@ class ImportPackageByComposerName extends Command
         foreach ($package->versions as $version) {
             $this->info("Processing version {$version->version} of package {$package->name}");
             // Dispatch job to process the version
-            dispatch_sync(new RepackageVersionInZipJob($package, $version));
+            dispatch(new RepackageVersionInZipJob($package, $version));
         }
-
-//       dispatch_sync(new )
     }
 }
