@@ -3,21 +3,17 @@
 declare(strict_types=1);
 
 namespace App\Services;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
+use App\Contracts\Services\PackagistServiceContract;
 
 
-class PackagistService
+class PackagistService implements PackagistServiceContract
 {
     public function __construct(
         protected PackagistClient $client
     ) {}
 
-    public function search(string $query): array
+    public function search(string $query, int $page = 1): array
     {
-        $page = 1;
         $matches = [];
         do {
             $result = $this->client->search($query, $page);
