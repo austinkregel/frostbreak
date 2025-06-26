@@ -53,13 +53,12 @@ When you're ready to access the app visit [localhost](http://localhost:8000) in 
 
 ### Configuring WinterCMS Installation
 
-To link a WinterCMS installation to the marketplace, you need to add the marketplace URL to the `config/cms.php` file of your WinterCMS installation.
-
+To link a WinterCMS installation to the marketplace, you need to add the marketplace URL to the `config/cms.php` file of your WinterCMS installation. For the time being I'll be hosting the marketplace at `http://frostbreak.market/place`.
 ```php
-    'updateServer' => env('WINTER_MARKETPLACE_URL', 'http://marketplace.test/place'),
+    'updateServer' => env('WINTER_MARKETPLACE_URL', 'http://frostbreak.market/place'),
 ```
 
-In `http://DOMAIN/place`, replace `DOMAIN` with the domain or IP address where your marketplace is hosted `/place` is the endpoint that WinterCMS will use to communicate with the marketplace.
+If you want to use your own hosted domain for the marketplace, replace `frostbreak.market` with your own domain after setting up the marketplace.
 
 To restore the original WinterCMS update server, comment out the updateServer line or replace it with:
 
