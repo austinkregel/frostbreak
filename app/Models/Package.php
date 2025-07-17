@@ -35,6 +35,7 @@ class Package extends Model
         'latest_version_id',
         'demo_url',
         'product_url',
+        'owner_id',
     ];
 
     protected $appends = ['hash'];
@@ -68,5 +69,14 @@ class Package extends Model
     {
         return $this->toArray();
     }
-}
 
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function repository()
+    {
+        return $this->hasOne(Repository::class, 'html_url', 'repository_url');
+    }
+}

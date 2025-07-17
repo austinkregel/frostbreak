@@ -121,12 +121,18 @@ class RepackageVersionInZipJob implements ShouldQueue
         // --- Directory renaming and zipping logic ---
         // Convert package code (e.g., Winter.Users) to directory path (winter/users)
         $originalCode = '';
+        $isLatestVersion = $version->semantic_version === $package->versions->sortByDesc(function($v) {
+            return version_compare($v->semantic_version, '0.0.0');
+        })->first()->semantic_version;
         // Try to extract from Plugin.php if not set
         if ($archiveFilesystem->exists($directoryWhereTheCodeLives . '/Plugin.php')) {
             $content = $archiveFilesystem->get($directoryWhereTheCodeLives . '/Plugin.php');
             preg_match('/namespace\s+([^;]+);/', $content, $matches);
             if (isset($matches[1])) {
-                $package->code = $originalCode = str_replace('\\', '.', $matches[1]);
+                $originalCode = str_replace('\\', '.', $matches[1]);
+                if ($isLatestVersion) {
+                    $package->code = $originalCode;
+                }
             } else {
                 dd($originalCode, $package->code, $package->name, $matches, $content, $directoryWhereTheCodeLives);
             }
@@ -146,12 +152,16 @@ class RepackageVersionInZipJob implements ShouldQueue
 
             if (isset($themeYamlContent['code'])) {
                 $packageCodeAsFolder = $themeYamlContent['code'];
-                $package->code = $themeYamlContent['code'];
+                if ($isLatestVersion) {
+                    $package->code = $themeYamlContent['code'];
+                }
                 $this->info("  [!] Theme detected, using name from theme.yaml: {$packageCodeAsFolder}");
             } else if (isset($themeYamlContent['name'])) {
                 $packageCodeAsFolder = strtolower(str_replace(' ', '-', $themeYamlContent['name']));
                 $this->info("  [!] Theme detected, using name from theme.yaml: {$packageCodeAsFolder}");
-                $package->name = $themeYamlContent['name'];
+                if ($isLatestVersion) {
+                    $package->name = $themeYamlContent['name'];
+                }
             }
         }
         $package->keywords = array_values(array_unique($keywordsToAdd));
@@ -234,6 +244,15 @@ class RepackageVersionInZipJob implements ShouldQueue
 
         $packageFilesystem->makeDirectory($package->name);
         $locationOfProcessedVersion = $packageFilesystem->path($relativeZipFileName = $package->name.'/'.Str::slug($version->semantic_version).'.zip');
+        try {
+            $composerAttempt = new Process([
+                'composer install',
+            ], $newFolderForCode);
+            $composerAttempt->run();
+        } catch (\Throwable $e) {
+            $this->error("  [!] Failed to run composer install for package: {$package->name}");
+            $this->error("  [!] Error: " . $e->getMessage());
+        }
 
         $zipProcess = new Process([
             'zip', '-rm', $locationOfProcessedVersion, $packageCodeAsFolder

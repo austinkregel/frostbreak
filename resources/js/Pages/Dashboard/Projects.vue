@@ -28,8 +28,9 @@
               </div>
               <h2 class="font-bold text-xl mb-1 text-gray-900 dark:text-gray-100">{{ project.name }}</h2>
               <p class="text-gray-700 dark:text-gray-300 min-h-[48px]">{{ project.description }}</p>
-              <div class="flex justify-end mt-4">
+              <div class="flex justify-end mt-4 gap-2">
                 <Link :href="'/project/' + project.license_id" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">View Project</Link>
+                <button @click="confirmDelete(project)" class="ml-2 px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 text-xs font-semibold">Delete</button>
               </div>
             </div>
           </div>
@@ -95,6 +96,17 @@
         </div>
       </div>
     </div>
+    <!-- Delete Project Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div class="bg-white dark:bg-gray-900 p-6 rounded shadow-lg w-full max-w-md">
+        <h3 class="text-lg font-bold mb-4 dark:text-white">Delete Project</h3>
+        <p class="mb-4 text-gray-700 dark:text-gray-300">Are you sure you want to delete the project <span class="font-bold">{{ projectToDelete?.name }}</span>? This action cannot be undone.</p>
+        <div class="flex justify-end gap-2">
+          <button @click="showDeleteModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:text-white rounded">Cancel</button>
+          <button @click="deleteProject" :disabled="processingDelete" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>
+        </div>
+      </div>
+    </div>
   </AppLayout>
 </template>
 
@@ -120,6 +132,11 @@ const search = ref(props.filters?.search || '');
 const showAddToProjectModal = ref(false);
 const selectedItem = ref(null);
 const selectedType = ref(null);
+
+// Delete modal state
+const showDeleteModal = ref(false);
+const projectToDelete = ref(null);
+const processingDelete = ref(false);
 
 async function submitForm() {
   processing.value = true;
@@ -181,6 +198,26 @@ async function addToProject(projectId) {
     onSuccess: () => {
       closeAddToProjectModal();
     }
+  });
+}
+
+// Delete project functions
+function confirmDelete(project) {
+  projectToDelete.value = project;
+  showDeleteModal.value = true;
+}
+
+function deleteProject() {
+  if (!projectToDelete.value) return;
+  processingDelete.value = true;
+  router.delete(`/projects/${projectToDelete.value.license_id}`, {
+    onFinish: () => {
+      processingDelete.value = false;
+      showDeleteModal.value = false;
+      projectToDelete.value = null;
+      // Optionally, you can reload or refetch projects here
+      window.location.reload();
+    },
   });
 }
 </script>

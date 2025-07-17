@@ -16,6 +16,7 @@
         "laravel/jetstream": "*",
         "laravel/sanctum": "^4.0",
         "laravel/scout": "^10.15",
+        "laravel/socialite": "^5.21",
         "laravel/tinker": "^2.10.1",
         "meilisearch/meilisearch-php": "^1.14",
         "tightenco/ziggy": "^2.0"

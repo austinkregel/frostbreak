@@ -102,6 +102,19 @@
             </div>
           </div>
         </div>
+        <div class="flex justify-end gap-2 mt-8">
+          <button @click="showDeleteModal = true" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete Project</button>
+        </div>
+        <div v-if="showDeleteModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div class="bg-white dark:bg-gray-900 p-6 rounded shadow-lg w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4 dark:text-white">Delete Project</h3>
+            <p class="mb-4 text-gray-700 dark:text-gray-300">Are you sure you want to delete this project? This action cannot be undone.</p>
+            <div class="flex justify-end gap-2">
+              <button @click="showDeleteModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:text-white rounded">Cancel</button>
+              <button @click="deleteProject" :disabled="processingDelete" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </AppLayout>
@@ -123,6 +136,8 @@ const { project, themeQuery, pluginQuery, pluginSearchResults, themeSearchResult
 
 const themeSearch = ref(themeQuery || "");
 const pluginSearch = ref(pluginQuery || "");
+const showDeleteModal = ref(false);
+const processingDelete = ref(false);
 
 watch(themeSearch, (val) => {
   router.get(
@@ -171,5 +186,17 @@ async function removeFromProject(item, type) {
   } catch (e) {
     searchError.value = e.response?.data?.message || `Failed to remove ${type} from project.`;
   }
+}
+
+function deleteProject() {
+  processingDelete.value = true;
+  router.delete(`/projects/${project.license_id}`, {
+    onFinish: () => {
+      processingDelete.value = false;
+      showDeleteModal.value = false;
+      // Optionally, redirect to dashboard or projects list
+      window.location.href = '/projects';
+    },
+  });
 }
 </script>

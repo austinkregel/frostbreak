@@ -36,7 +36,7 @@
       <div v-else>
         <div v-if="results.length === 0 && searched" class="text-center text-gray-500 dark:text-gray-400 py-8">No results found.</div>
         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="item in results" :key="item.id" class="border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-white dark:bg-gray-800 shadow hover:shadow-lg transition">
+          <div v-for="item in results" :key="item.id" class="border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-white dark:bg-gray-800 shadow hover:shadow-lg transition flex flex-col">
             <div class="flex items-center justify-between gap-2 mb-2">
                 <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide" :class="item.keywords.includes('theme') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'"></span>
                 <div class="flex justify-end">
@@ -46,17 +46,17 @@
                 </div>
             </div>
             <h2 class="font-bold text-xl mb-1 text-gray-900 dark:text-gray-100">{{ item.name }}</h2>
-            <p class="text-gray-700 dark:text-gray-300 min-h-[48px]">{{ item.description }}</p>
-            <div class="flex justify-end mt-4 gap-2">
-              <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">View Details</a>
-              <button @click="openAddToProjectModal(item)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
-                Add to Project
-              </button>
+            <p class="text-gray-700 dark:text-gray-300 min-h-[3px] flex-grow">{{ item.description }}</p>
+            <div class="flex justify-between mt-4 gap-2">
+                <div class="flex flex-wrap gap-2">
+                    <div v-for="keyword in item.keywords ?? []" class="bg-amber-200 dark:bg-amber-800 dark:text-amber-100 px-1.5 rounded-lg shadow">{{ keyword }}</div>
+                </div>
+                <button @click="openAddToProjectModal(item)" class="bg-green-600 hover:bg-green-700 text-white px-1.5 py-1 text-sm rounded-lg font-semibold shadow transition">
+                    Add to Project
+                </button>
             </div>
 
-              <div class="flex flex-wrap gap-2 mt-3">
-                  <div v-for="keyword in item.keywords ?? []" class="bg-amber-200 dark:bg-amber-800 dark:text-amber-100 px-1.5 rounded-lg shadow">{{ keyword }}</div>
-              </div>
+
           </div>
         </div>
       </div>
