@@ -26,6 +26,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'github_id',
     ];
 
     protected $hidden = [
@@ -50,5 +51,10 @@ class User extends Authenticatable
     public function projects()
     {
         return $this->morphOne(Project::class, 'owner');
+    }
+
+    public function repositories()
+    {
+        return $this->hasMany(Repository::class);
     }
 }

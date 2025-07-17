@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "@heroicons/vue": "^2.2.0",
-        "@kbco/query-builder": "^0.0.4"
+        "@kbco/query-builder": "^0.0.4",
+        "marked": "^16.0.0"
     }
 }

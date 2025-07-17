@@ -6,6 +6,8 @@ use App\Http\Controllers\Packages;
 use App\Http\Controllers\CoreUpdateController;
 use App\Http\Controllers\Themes;
 use App\Http\Controllers\Versions;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RepositoryController;
 
 // API routes for packages
 Route::withoutMiddleware([
@@ -64,7 +66,21 @@ Route::middleware([
     Route::put('/projects/{project:license_id}', [\App\Http\Controllers\Projects::class, 'update'])->name('projects.update');
     Route::delete('/projects/{project:license_id}', [\App\Http\Controllers\Projects::class, 'destroy'])->name('projects.destroy');
     Route::get('/search', [\App\Http\Controllers\SearchController::class, 'index'])->name('search.index');
+
+    // Repositories
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/repositories', [RepositoryController::class, 'index'])->name('repositories.index');
+        Route::post('/repositories/{id}/claim', [RepositoryController::class, 'claim'])->name('repositories.claim');
+    });
 });
+
+// GitHub OAuth routes
+Route::get('auth/github', [AuthController::class, 'redirectToGithub'])->name('auth.github');
+Route::get('auth/github/callback', [AuthController::class, 'handleGithubCallback'])->name('auth.github.callback');
+
+// Privacy Policy
+Route::get('/privacy-policy', [\App\Http\Controllers\PrivacyPolicyController::class, 'show'])->name('privacy-policy');
+
 // We need to define our own 404 route so we can identify routes that aren't making their way to our app.
 Route::fallback(function () {
     info('404 Not Found: ' . request()->getPathInfo() . ' - ' . request()->getMethod(), [
