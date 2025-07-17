@@ -30,6 +30,8 @@ class ProjectRepository implements ProjectRepositoryContract
 
     public function delete(Project $project): bool
     {
+
+        $project->packages()->detach($project->packages->pluck('id'));
         return $project->delete();
     }
 
